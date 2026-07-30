@@ -1,0 +1,27 @@
+# =====================================================================
+#  hiclift — the `.hic` export env for `mcool_to_hic` (00_09).
+#
+#  This rule is OFF by default (hic.mcool_to_hic.enabled: false) and no
+#  paper panel depends on it, so this env is only ever built if a user
+#  actually asks for `.hic` files.
+#
+#  It is separate from the core env on purpose: HiCLift pulls pairtools
+#  and its own numpy/cooler constraints, and the core env's numpy 1.23 /
+#  cooltools 0.5.4 solve is hard-won (plan section 5.3). Keeping the two
+#  apart means turning `.hic` export on can never break compartments.
+# =====================================================================
+name: xci-hiclift
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.9
+  - cooler
+  - pairtools
+  - numpy
+  - pandas
+  - scipy
+  - pip
+  - pip:
+      - HiCLift

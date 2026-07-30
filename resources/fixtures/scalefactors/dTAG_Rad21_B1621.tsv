@@ -1,0 +1,15 @@
+# Ground-truth scale factors recovered from the ORIGINAL bigWigs.
+# See workflow/scripts/py/recover_scale_factors.py. REPLICATE LEVEL ONLY.
+sample	scale_factor	LibSize	NormFactor	recovered_from	source_bigwig
+Rad21_B1621_Rad21-NodTAG_Gall_rep1	0.045607998967170715			chr13,chr19	Rad21_B1621_Rad21-NodTAG_Gall_rep1.bw
+Rad21_B1621_Rad21-NodTAG_Gall_rep2	0.054367098957300186			chr13,chr19	Rad21_B1621_Rad21-NodTAG_Gall_rep2.bw
+Rad21_B1621_Rad21-NodTAG_Xa_rep1	0.045607998967170715			chr13,chr19	Rad21_B1621_Rad21-NodTAG_Xa_rep1.bw
+Rad21_B1621_Rad21-NodTAG_Xa_rep2	0.054367098957300186			chr13,chr19	Rad21_B1621_Rad21-NodTAG_Xa_rep2.bw
+Rad21_B1621_Rad21-NodTAG_Xi_rep1	0.045607998967170715			chr13,chr19	Rad21_B1621_Rad21-NodTAG_Xi_rep1.bw
+Rad21_B1621_Rad21-NodTAG_Xi_rep2	0.054367098957300186			chr13,chr19	Rad21_B1621_Rad21-NodTAG_Xi_rep2.bw
+Rad21_B1621_Rad21-dTAG_Gall_rep1	0.07903070002794266			chr13,chr19	Rad21_B1621_Rad21-dTAG_Gall_rep1.bw
+Rad21_B1621_Rad21-dTAG_Gall_rep2	0.0815151035785675			chr13,chr19	Rad21_B1621_Rad21-dTAG_Gall_rep2.bw
+Rad21_B1621_Rad21-dTAG_Xa_rep1	0.07903070002794266			chr13,chr19	Rad21_B1621_Rad21-dTAG_Xa_rep1.bw
+Rad21_B1621_Rad21-dTAG_Xa_rep2	0.0815151035785675			chr13,chr19	Rad21_B1621_Rad21-dTAG_Xa_rep2.bw
+Rad21_B1621_Rad21-dTAG_Xi_rep1	0.07903070002794266			chr13,chr19	Rad21_B1621_Rad21-dTAG_Xi_rep1.bw
+Rad21_B1621_Rad21-dTAG_Xi_rep2	0.0815151035785675			chr13,chr19	Rad21_B1621_Rad21-dTAG_Xi_rep2.bw

@@ -1,0 +1,148 @@
+# =====================================================================
+#  cooler_membership.tsv  --  FIXTURE (decision D-10)
+#
+#  Which per-clone coolers are summed into which merged cooler. Transcribed --
+#  by parsing, not by hand -- from BOTH original merge scripts:
+#      Antonia_Edith_01/scripts/00_03_merge_F3_coolers.sh
+#      Antonia_Edith_01/scripts/00_03_merge_F3_coolers copy.sh
+#  The `copy` script is the later addition that pools the `*_dTAG_*` sets.
+#
+#  Consumed by:  make_sheets.py -> config/coolers.tsv (merge_loops / merge_comps)
+#                rules merge_coolers_loops / merge_coolers_comps
+#
+#  Columns
+#  -------
+#  cooler        member cooler name, i.e. a row of config/coolers.tsv, OR one of
+#                the four F3 replicate merges produced by `merge_f3_replicates`
+#                (Mecp2_F3_CTCF-{dTAG,NodTAG}_{G2_Xa,G1_Xi}); those exist only
+#                as intermediates and carry no `path`.
+#  scope         merged_loops | merged_comps
+#  merged_name   output cooler name within that scope
+#
+#  A cooler may appear in MORE THAN ONE merged_comps group: every CTCF-dTAG and
+#  Rad21-dTAG cooler is in both its specific group and the pooled `*_dTAG_*`
+#  group. config/coolers.tsv therefore carries a COMMA-SEPARATED merge_comps
+#  cell, and lib/samples.py splits on commas.
+#
+#  ON-DISK NAME BEATS SCRIPT NAME. `00_03_merge_F3_coolers copy.sh` line 11
+#  writes `merged_for_loops/Mecp2_CTCF-dTAG_Xa.cool`, but its own Xi sibling on
+#  line 19 writes `Mecp2_dTAG_Xi.cool`, and the file that exists on disk -- and
+#  that 01_03/01_04/01_08 all read -- is `Mecp2_dTAG_Xa.cool`. The generator
+#  substitutes the on-disk name and reports the substitution.
+#
+#  Verified counts
+#  ---------------
+#  merged_loops (8 outputs, 44 rows):
+#      Mecp2_Xa 9   Mecp2_Xi 9   Jarid_Xa 6   Jarid_Xi 6      <- 9 + 6 = "N = 15" (EFig 3)
+#      Mecp2_dTAG_Xa 4   Mecp2_dTAG_Xi 4   Jarid_dTAG_Xa 3   Jarid_dTAG_Xi 3
+#  merged_comps (16 outputs, 58 rows):
+#      *_NodTAG-or-WT_*  = identical membership to the merged_loops WT/NodTAG sets
+#      Mecp2_CTCF-dTAG_* = F3 + C5C10 + E6A7 (3);  Jarid_CTCF-dTAG_* = C5C10 + E6A7 (2)
+#      *_Rad21-dTAG_*    = B1621 alone (1)
+#      *_dTAG_*          = CTCF-dTAG + Rad21-dTAG pooled (Mecp2 4, Jarid 3)
+#  Every merged_name was checked against the real files in
+#  Antonia_Edith_01/data/coolers_corrected/merged_for_{loops,compartments}/.
+# =====================================================================
+cooler	scope	merged_name
+Mecp2_F3_CTCF-NodTAG_G2_Xa	merged_loops	Mecp2_Xa
+Mecp2_B1_WT_G1_Xa	merged_loops	Mecp2_Xa
+Mecp2_B1621_Rad21-NodTAG_G2_Xa	merged_loops	Mecp2_Xa
+Mecp2_C5_WT_G1_Xa	merged_loops	Mecp2_Xa
+Mecp2_C5C10_CTCF-NodTAG_G1_Xa	merged_loops	Mecp2_Xa
+Mecp2_E6A7_CTCF-NodTAG_G2_Xa	merged_loops	Mecp2_Xa
+Mecp2_JTG_WT_G2_Xa	merged_loops	Mecp2_Xa
+Mecp2_CL30_WT_G2_Xa	merged_loops	Mecp2_Xa
+Mecp2_E6_WT_G2_Xa	merged_loops	Mecp2_Xa
+Mecp2_F3_CTCF-NodTAG_G1_Xi	merged_loops	Mecp2_Xi
+Mecp2_B1_WT_G2_Xi	merged_loops	Mecp2_Xi
+Mecp2_B1621_Rad21-NodTAG_G1_Xi	merged_loops	Mecp2_Xi
+Mecp2_C5_WT_G2_Xi	merged_loops	Mecp2_Xi
+Mecp2_C5C10_CTCF-NodTAG_G2_Xi	merged_loops	Mecp2_Xi
+Mecp2_E6A7_CTCF-NodTAG_G1_Xi	merged_loops	Mecp2_Xi
+Mecp2_JTG_WT_G1_Xi	merged_loops	Mecp2_Xi
+Mecp2_CL30_WT_G1_Xi	merged_loops	Mecp2_Xi
+Mecp2_E6_WT_G1_Xi	merged_loops	Mecp2_Xi
+Jarid_B1_WT_G1_Xa	merged_loops	Jarid_Xa
+Jarid_B1621_Rad21-NodTAG_G2_Xa	merged_loops	Jarid_Xa
+Jarid_C5_WT_G1_Xa	merged_loops	Jarid_Xa
+Jarid_C5C10_CTCF-NodTAG_G1_Xa	merged_loops	Jarid_Xa
+Jarid_E6A7_CTCF-NodTAG_G2_Xa	merged_loops	Jarid_Xa
+Jarid_E6_WT_G2_Xa	merged_loops	Jarid_Xa
+Jarid_B1_WT_G2_Xi	merged_loops	Jarid_Xi
+Jarid_B1621_Rad21-NodTAG_G1_Xi	merged_loops	Jarid_Xi
+Jarid_C5_WT_G2_Xi	merged_loops	Jarid_Xi
+Jarid_C5C10_CTCF-NodTAG_G2_Xi	merged_loops	Jarid_Xi
+Jarid_E6A7_CTCF-NodTAG_G1_Xi	merged_loops	Jarid_Xi
+Jarid_E6_WT_G1_Xi	merged_loops	Jarid_Xi
+Mecp2_F3_CTCF-dTAG_G2_Xa	merged_comps	Mecp2_CTCF-dTAG_Xa
+Mecp2_C5C10_CTCF-dTAG_G1_Xa	merged_comps	Mecp2_CTCF-dTAG_Xa
+Mecp2_E6A7_CTCF-dTAG_G2_Xa	merged_comps	Mecp2_CTCF-dTAG_Xa
+Mecp2_F3_CTCF-dTAG_G1_Xi	merged_comps	Mecp2_CTCF-dTAG_Xi
+Mecp2_C5C10_CTCF-dTAG_G2_Xi	merged_comps	Mecp2_CTCF-dTAG_Xi
+Mecp2_E6A7_CTCF-dTAG_G1_Xi	merged_comps	Mecp2_CTCF-dTAG_Xi
+Mecp2_B1621_Rad21-dTAG_G2_Xa	merged_comps	Mecp2_Rad21-dTAG_Xa
+Mecp2_B1621_Rad21-dTAG_G1_Xi	merged_comps	Mecp2_Rad21-dTAG_Xi
+Mecp2_F3_CTCF-NodTAG_G2_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_B1_WT_G1_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_B1621_Rad21-NodTAG_G2_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_C5_WT_G1_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_C5C10_CTCF-NodTAG_G1_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_E6A7_CTCF-NodTAG_G2_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_JTG_WT_G2_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_CL30_WT_G2_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_E6_WT_G2_Xa	merged_comps	Mecp2_NodTAG-or-WT_Xa
+Mecp2_F3_CTCF-NodTAG_G1_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_B1_WT_G2_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_B1621_Rad21-NodTAG_G1_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_C5_WT_G2_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_C5C10_CTCF-NodTAG_G2_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_E6A7_CTCF-NodTAG_G1_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_JTG_WT_G1_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_CL30_WT_G1_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Mecp2_E6_WT_G1_Xi	merged_comps	Mecp2_NodTAG-or-WT_Xi
+Jarid_C5C10_CTCF-dTAG_G1_Xa	merged_comps	Jarid_CTCF-dTAG_Xa
+Jarid_E6A7_CTCF-dTAG_G2_Xa	merged_comps	Jarid_CTCF-dTAG_Xa
+Jarid_C5C10_CTCF-dTAG_G2_Xi	merged_comps	Jarid_CTCF-dTAG_Xi
+Jarid_E6A7_CTCF-dTAG_G1_Xi	merged_comps	Jarid_CTCF-dTAG_Xi
+Jarid_B1621_Rad21-dTAG_G2_Xa	merged_comps	Jarid_Rad21-dTAG_Xa
+Jarid_B1621_Rad21-dTAG_G1_Xi	merged_comps	Jarid_Rad21-dTAG_Xi
+Jarid_B1_WT_G1_Xa	merged_comps	Jarid_NodTAG-or-WT_Xa
+Jarid_B1621_Rad21-NodTAG_G2_Xa	merged_comps	Jarid_NodTAG-or-WT_Xa
+Jarid_C5_WT_G1_Xa	merged_comps	Jarid_NodTAG-or-WT_Xa
+Jarid_C5C10_CTCF-NodTAG_G1_Xa	merged_comps	Jarid_NodTAG-or-WT_Xa
+Jarid_E6A7_CTCF-NodTAG_G2_Xa	merged_comps	Jarid_NodTAG-or-WT_Xa
+Jarid_E6_WT_G2_Xa	merged_comps	Jarid_NodTAG-or-WT_Xa
+Jarid_B1_WT_G2_Xi	merged_comps	Jarid_NodTAG-or-WT_Xi
+Jarid_B1621_Rad21-NodTAG_G1_Xi	merged_comps	Jarid_NodTAG-or-WT_Xi
+Jarid_C5_WT_G2_Xi	merged_comps	Jarid_NodTAG-or-WT_Xi
+Jarid_C5C10_CTCF-NodTAG_G2_Xi	merged_comps	Jarid_NodTAG-or-WT_Xi
+Jarid_E6A7_CTCF-NodTAG_G1_Xi	merged_comps	Jarid_NodTAG-or-WT_Xi
+Jarid_E6_WT_G1_Xi	merged_comps	Jarid_NodTAG-or-WT_Xi
+Mecp2_F3_CTCF-dTAG_G2_Xa	merged_loops	Mecp2_dTAG_Xa
+Mecp2_B1621_Rad21-dTAG_G2_Xa	merged_loops	Mecp2_dTAG_Xa
+Mecp2_C5C10_CTCF-dTAG_G1_Xa	merged_loops	Mecp2_dTAG_Xa
+Mecp2_E6A7_CTCF-dTAG_G2_Xa	merged_loops	Mecp2_dTAG_Xa
+Mecp2_F3_CTCF-dTAG_G1_Xi	merged_loops	Mecp2_dTAG_Xi
+Mecp2_B1621_Rad21-dTAG_G1_Xi	merged_loops	Mecp2_dTAG_Xi
+Mecp2_C5C10_CTCF-dTAG_G2_Xi	merged_loops	Mecp2_dTAG_Xi
+Mecp2_E6A7_CTCF-dTAG_G1_Xi	merged_loops	Mecp2_dTAG_Xi
+Jarid_B1621_Rad21-dTAG_G2_Xa	merged_loops	Jarid_dTAG_Xa
+Jarid_C5C10_CTCF-dTAG_G1_Xa	merged_loops	Jarid_dTAG_Xa
+Jarid_E6A7_CTCF-dTAG_G2_Xa	merged_loops	Jarid_dTAG_Xa
+Jarid_B1621_Rad21-dTAG_G1_Xi	merged_loops	Jarid_dTAG_Xi
+Jarid_C5C10_CTCF-dTAG_G2_Xi	merged_loops	Jarid_dTAG_Xi
+Jarid_E6A7_CTCF-dTAG_G1_Xi	merged_loops	Jarid_dTAG_Xi
+Mecp2_F3_CTCF-dTAG_G2_Xa	merged_comps	Mecp2_dTAG_Xa
+Mecp2_C5C10_CTCF-dTAG_G1_Xa	merged_comps	Mecp2_dTAG_Xa
+Mecp2_E6A7_CTCF-dTAG_G2_Xa	merged_comps	Mecp2_dTAG_Xa
+Mecp2_B1621_Rad21-dTAG_G2_Xa	merged_comps	Mecp2_dTAG_Xa
+Mecp2_F3_CTCF-dTAG_G1_Xi	merged_comps	Mecp2_dTAG_Xi
+Mecp2_C5C10_CTCF-dTAG_G2_Xi	merged_comps	Mecp2_dTAG_Xi
+Mecp2_E6A7_CTCF-dTAG_G1_Xi	merged_comps	Mecp2_dTAG_Xi
+Mecp2_B1621_Rad21-dTAG_G1_Xi	merged_comps	Mecp2_dTAG_Xi
+Jarid_C5C10_CTCF-dTAG_G1_Xa	merged_comps	Jarid_dTAG_Xa
+Jarid_E6A7_CTCF-dTAG_G2_Xa	merged_comps	Jarid_dTAG_Xa
+Jarid_B1621_Rad21-dTAG_G2_Xa	merged_comps	Jarid_dTAG_Xa
+Jarid_C5C10_CTCF-dTAG_G2_Xi	merged_comps	Jarid_dTAG_Xi
+Jarid_E6A7_CTCF-dTAG_G1_Xi	merged_comps	Jarid_dTAG_Xi
+Jarid_B1621_Rad21-dTAG_G1_Xi	merged_comps	Jarid_dTAG_Xi

@@ -1,0 +1,29 @@
+# coolbox 0.3.9 satellite environment — used by panel_coolbox_browser only.
+#
+# matplotlib is pinned to 3.8.* to match the ORIGINAL coolbox env (3.8.2),
+# not to coolbox's declared `matplotlib>=3.8.4`. The original itself violated
+# that declaration and worked; matching the original wins.
+name: xci-coolbox
+channels: [conda-forge, bioconda, nodefaults]
+dependencies:
+  - python=3.10
+  - numpy=1.26.*
+  - pandas=2.1.*
+  - scipy=1.11.*
+  - matplotlib-base=3.8.*
+  - statsmodels
+  - h5py
+  - cooler=0.9.3
+  - pybbi
+  - intervaltree
+  - svgutils
+  - nbformat
+  - fire
+  - numpydoc
+  - dna_features_viewer
+  - htslib
+  - pyyaml
+  - pip
+  - pip:
+      - coolbox==0.3.9
+      - strawC

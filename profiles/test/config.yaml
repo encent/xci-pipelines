@@ -1,0 +1,17 @@
+# Test profile — decisions D-04 and D-09.
+#
+# The csaw/edgeR TMM stage runs on chr7 (which IS in the original restrict
+# set) because a chrX-only BAM subset cannot produce the ground-truth scale
+# factors at all. Everything downstream runs on chrX, with the ground-truth
+# scale factors injected from fixtures so the whole chain below bam_coverage
+# is a deterministic function of chrX BAMs alone.
+cores: all
+local-cores: 4
+rerun-triggers: [mtime]
+printshellcmds: true
+latency-wait: 30
+keep-going: false          # a test run should stop at the first failure
+show-failed-logs: true
+config:
+  - chromosomes={'csaw': ['chr7'], 'downstream': ['chrX'], 'valley_control': ['chr7'], 'test': ['chrX', 'chr7']}
+  - normalization={'scale_factor_source': 'fixture'}

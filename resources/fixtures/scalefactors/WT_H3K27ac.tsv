@@ -1,0 +1,36 @@
+# Ground-truth scale factors recovered from the ORIGINAL pipeline's
+# bigWigs: the minimum positive value on an autosome is exactly the
+# applied `--scaleFactor` (one read x s).
+# source: /mnt/scratch/nikolai/Antonia/BAMS_WT_H3K27ac/norm_bw_WT_H3K27ac_compos_selected
+# recovered on: chr19, chr13 (bit-equality asserted)
+# `scale_factor` is the PRODUCT 1e6/(LibSize*NormFactor). LibSize and
+# NormFactor are NOT separately recoverable and stay empty here.
+# REPLICATE LEVEL ONLY -- merged/5 kb/AcMe3 are always recomputed.
+sample	scale_factor	LibSize	NormFactor	recovered_from	source_bigwig
+H3K27ac_B1_WT_Gall_rep1	0.06908150017261505			chr13,chr19	H3K27ac_B1_WT_Gall_rep1.bw
+H3K27ac_B1_WT_Gall_rep2	0.07888010144233704			chr13,chr19	H3K27ac_B1_WT_Gall_rep2.bw
+H3K27ac_B1_WT_Xa_rep1	0.06908150017261505			chr13,chr19	H3K27ac_B1_WT_Xa_rep1.bw
+H3K27ac_B1_WT_Xa_rep2	0.07888010144233704			chr13,chr19	H3K27ac_B1_WT_Xa_rep2.bw
+H3K27ac_B1_WT_Xi_rep1	0.06908150017261505			chr13,chr19	H3K27ac_B1_WT_Xi_rep1.bw
+H3K27ac_B1_WT_Xi_rep2	0.07888010144233704			chr13,chr19	H3K27ac_B1_WT_Xi_rep2.bw
+H3K27ac_C5_WT_Gall_rep1	0.04859070107340813			chr13,chr19	H3K27ac_C5_WT_Gall_rep1.bw
+H3K27ac_C5_WT_Gall_rep2	0.041374098509550095			chr13,chr19	H3K27ac_C5_WT_Gall_rep2.bw
+H3K27ac_C5_WT_Xa_rep1	0.04859070107340813			chr13,chr19	H3K27ac_C5_WT_Xa_rep1.bw
+H3K27ac_C5_WT_Xa_rep2	0.041374098509550095			chr13,chr19	H3K27ac_C5_WT_Xa_rep2.bw
+H3K27ac_C5_WT_Xi_rep1	0.04859070107340813			chr13,chr19	H3K27ac_C5_WT_Xi_rep1.bw
+H3K27ac_C5_WT_Xi_rep2	0.041374098509550095			chr13,chr19	H3K27ac_C5_WT_Xi_rep2.bw
+H3K27ac_CL30_WT_Gall_rep1	0.04796979948878288			chr13,chr19	H3K27ac_CL30_WT_Gall_rep1.bw
+H3K27ac_CL30_WT_Xa_rep1	0.04253939911723137			chr13,chr19	H3K27ac_CL30_WT_Xa_rep1.bw
+H3K27ac_CL30_WT_Xi_rep1	0.04796979948878288			chr13,chr19	H3K27ac_CL30_WT_Xi_rep1.bw
+H3K27ac_E6_WT_Gall_rep1	0.04253939911723137			chr13,chr19	H3K27ac_E6_WT_Gall_rep1.bw
+H3K27ac_E6_WT_Gall_rep2	0.04796979948878288			chr13,chr19	H3K27ac_E6_WT_Gall_rep2.bw
+H3K27ac_E6_WT_Xa_rep1	0.04253939911723137			chr13,chr19	H3K27ac_E6_WT_Xa_rep1.bw
+H3K27ac_E6_WT_Xa_rep2	0.03909999877214432			chr13,chr19	H3K27ac_E6_WT_Xa_rep2.bw
+H3K27ac_E6_WT_Xi_rep1	0.04185900092124939			chr13,chr19	H3K27ac_E6_WT_Xi_rep1.bw
+H3K27ac_E6_WT_Xi_rep2	0.03909999877214432			chr13,chr19	H3K27ac_E6_WT_Xi_rep2.bw
+H3K27ac_JTG_WT_Gall_rep1	0.04185900092124939			chr13,chr19	H3K27ac_JTG_WT_Gall_rep1.bw
+H3K27ac_JTG_WT_Gall_rep2	0.03909999877214432			chr13,chr19	H3K27ac_JTG_WT_Gall_rep2.bw
+H3K27ac_JTG_WT_Xa_rep1	0.04185900092124939			chr13,chr19	H3K27ac_JTG_WT_Xa_rep1.bw
+H3K27ac_JTG_WT_Xa_rep2	0.06295859813690186			chr13,chr19	H3K27ac_JTG_WT_Xa_rep2.bw
+H3K27ac_JTG_WT_Xi_rep1	0.06295859813690186			chr13,chr19	H3K27ac_JTG_WT_Xi_rep1.bw
+H3K27ac_JTG_WT_Xi_rep2	0.06295859813690186			chr13,chr19	H3K27ac_JTG_WT_Xi_rep2.bw

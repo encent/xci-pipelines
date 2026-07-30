@@ -1,0 +1,15 @@
+# Ground-truth scale factors recovered from the ORIGINAL bigWigs.
+# See workflow/scripts/py/recover_scale_factors.py. REPLICATE LEVEL ONLY.
+sample	scale_factor	LibSize	NormFactor	recovered_from	source_bigwig
+RNA-Seq_B1621_Rad21-NodTAG_Gall_rep1	0.07240509986877441			chr13,chr19	RNA-Seq_B1621_Rad21-NodTAG_Gall_rep1.bw
+RNA-Seq_B1621_Rad21-NodTAG_Gall_rep2	0.09056779742240906			chr13,chr19	RNA-Seq_B1621_Rad21-NodTAG_Gall_rep2.bw
+RNA-Seq_B1621_Rad21-NodTAG_Xa_rep1	0.07240509986877441			chr13,chr19	RNA-Seq_B1621_Rad21-NodTAG_Xa_rep1.bw
+RNA-Seq_B1621_Rad21-NodTAG_Xa_rep2	0.09056779742240906			chr13,chr19	RNA-Seq_B1621_Rad21-NodTAG_Xa_rep2.bw
+RNA-Seq_B1621_Rad21-NodTAG_Xi_rep1	0.07240509986877441			chr13,chr19	RNA-Seq_B1621_Rad21-NodTAG_Xi_rep1.bw
+RNA-Seq_B1621_Rad21-NodTAG_Xi_rep2	0.09056779742240906			chr13,chr19	RNA-Seq_B1621_Rad21-NodTAG_Xi_rep2.bw
+RNA-Seq_B1621_Rad21-dTAG_Gall_rep1	0.059558700770139694			chr13,chr19	RNA-Seq_B1621_Rad21-dTAG_Gall_rep1.bw
+RNA-Seq_B1621_Rad21-dTAG_Gall_rep2	0.06654579937458038			chr13,chr19	RNA-Seq_B1621_Rad21-dTAG_Gall_rep2.bw
+RNA-Seq_B1621_Rad21-dTAG_Xa_rep1	0.059558700770139694			chr13,chr19	RNA-Seq_B1621_Rad21-dTAG_Xa_rep1.bw
+RNA-Seq_B1621_Rad21-dTAG_Xa_rep2	0.06654579937458038			chr13,chr19	RNA-Seq_B1621_Rad21-dTAG_Xa_rep2.bw
+RNA-Seq_B1621_Rad21-dTAG_Xi_rep1	0.059558700770139694			chr13,chr19	RNA-Seq_B1621_Rad21-dTAG_Xi_rep1.bw
+RNA-Seq_B1621_Rad21-dTAG_Xi_rep2	0.06654579937458038			chr13,chr19	RNA-Seq_B1621_Rad21-dTAG_Xi_rep2.bw

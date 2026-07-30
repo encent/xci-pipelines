@@ -1,0 +1,13 @@
+# Desktop profile — the default. Tuned for a workstation, not a cluster.
+cores: all
+local-cores: 8
+rerun-triggers: [mtime]
+printshellcmds: true
+latency-wait: 30
+keep-going: true
+restart-times: 1
+show-failed-logs: true
+max-jobs-per-second: 10
+resources:
+  # Cap concurrent memory so 48 cores do not launch 48 x 40 GB jobs.
+  mem_mb: 100000

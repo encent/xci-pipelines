@@ -1,0 +1,10 @@
+# F-8 — human-judgement colour constants, hard-coded in the original notebooks.
+# Source: 02_03_scatter_analysis_metaloci.ipynb and 01_08_coolbox_diff_hic_only.py
+allelic_ratio:
+  cmap: Greens
+  truncate: [0.0, 1.0]
+  # matplotlib.colors.Normalize(0.0424769728421052, 0.40909353528)
+  # Drives the green "D-score" circles in Fig 3a/b, 5b/c/g/h, EFig 8c/d, 10c/d.
+  # The figure legend calls these a METALoci D-score; they are in fact the
+  # RNA-seq allelic ratio from 01_07_get_allelic_ratio_gtf.py.
+  norm: [0.0424769728421052, 0.40909353528]

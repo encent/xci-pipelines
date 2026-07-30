@@ -1,0 +1,118 @@
+# =====================================================================
+#  XCI PIPELINE — the one environment you create and activate.
+#
+#      conda env create -f environment.yml
+#      conda activate xci-pipeline
+#
+#  Two further environments (metaloci, coolbox) are built automatically
+#  by install.sh and managed by Snakemake. You never name them.
+#  See the design notes section 5 for why one env is not possible.
+#
+#  Python is pinned to 3.9 because cooltools 0.5.4 — the version that
+#  produced the paper — has py39-only conda builds and its recipe pins
+#  numpy <1.24.
+# =====================================================================
+name: xci-pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+# PINNING RULE, applied package by package:
+#   does this library's output feed a number that appears in the paper?
+# If yes it is pinned to the version our verified results were produced under.
+# Unpinned entries below are tools whose OUTPUT FORMAT matters but whose
+# arithmetic does not reach a published figure (samtools, bedtools, htslib,
+# pairix, the UCSC binaries, fastqc, pyyaml, jsonschema, tqdm, pysam,
+# matplotlib-venn, pymupdf, adjusttext).
+#
+# Defect V-C is the reason this rule exists: an unpinned dependency two levels
+# down from anything we thought about -- sklearn, via hmmlearn's KMeans init --
+# silently controls which valleys get called.
+dependencies:
+  # --- driver ---------------------------------------------------------
+  - python=3.9
+  - snakemake-minimal=7.32.4
+  - pyyaml
+  - jsonschema
+  - pip
+
+  # --- numeric core: matched to the original `compartments` env --------
+  - numpy=1.23.*          # cooltools 0.5.4 recipe pins numpy <1.24 (orig: 1.24.4)
+  - pandas=1.5.3          # == original
+  - scipy=1.10.*          # == original
+
+  # --- genomics core ---------------------------------------------------
+  - cooler=0.9.1          # == original
+  - cooltools=0.5.4       # == original
+  - bioframe=0.8.0        # == original
+  - coolpuppy=1.1.0       # == original
+  - chromosight=1.6.3     # == original
+  - hmmlearn=0.3.3        # == original
+  - deeptools=3.5.5       # bigwigAverage requires >= 3.5.5
+  - pybigwig=0.3.22       # == original
+  # Pinned: bbi.stackup produces the boundary/loop signal matrices behind Fig 4f, 4g,
+  # EFig 2e, 2f and EFig 6b.
+  - pybbi=0.4.2
+  - pysam
+  - macs2=2.2.9.1         # == original
+  - samtools
+  - bedtools
+  - htslib                # bgzip + tabix
+  - pairix                # .px2 index on the loop .bedpe.bgz (coolbox reads it)
+  - ucsc-bigwigtobedgraph
+  - ucsc-bedgraphtobigwig
+  - ucsc-bigwiginfo
+  - fastqc
+
+  # --- plotting / stats -------------------------------------------------
+  - matplotlib-base=3.7.* # == original (3.7.1)
+  - seaborn=0.11.*        # == original; also satisfies statannotations' seaborn <0.12
+  # LOAD-BEARING -- pinned, do not unpin during a dependency cleanup.
+  # hmmlearn seeds GaussianHMM emission means via sklearn.cluster.KMeans
+  # (hmmlearn/hmm.py:311-315), so sklearn's KMeans sits DIRECTLY upstream of
+  # every valley call. That is the exact mechanism behind defect V-C: a
+  # different KMeans lands EM in a different local optimum and whole valleys
+  # appear or vanish. Unpinned, a fresh solve in six months would produce
+  # different valley BEDs with the thread count pinned and all else identical.
+  # It looks like an incidental transitive dependency. It is not.
+  - scikit-learn=1.6.1
+  # Pinned: cooltools numutils depends on it; reaches the saddle/eigenvector numerics.
+  - scikit-image=0.24.0
+  # Pinned: multipletests supplies the BH-FDR adjusted p-values annotated on the
+  # violin panels.
+  - statsmodels=0.14.5
+  # Pinned: graph numerics; pinned defensively -- METALoci pins its own 3.1 separately.
+  - networkx=3.2.1
+  - matplotlib-venn
+  - pymupdf
+  - adjusttext
+  # Pinned: cooler/mcool I/O; format-level, but it reads every contact matrix.
+  - h5py=3.13.0
+  - tqdm
+  # DIRECT IMPORT in call_valleys.py (the V-C fix). Was present only as a
+  # transitive dependency -- a solve that dropped it would break call_valleys
+  # outright, and a major-version change could alter threadpool_limits'
+  # semantics. A direct import must always be a declared dependency.
+  - threadpoolctl=3.6.0
+
+  # --- R: csaw / edgeR. No dependency overlap with the python stack. ----
+  - r-base=4.5
+  # Pinned by the same rule: csaw/edgeR TMM computes every scale factor, so it
+  # feeds EVERY number in the paper. These are NOT the versions that produced
+  # the ground truth -- that was Bioconductor 3.21 (csaw 1.42.0, edgeR 4.6.3),
+  # which is not on bioconda at all; only Bioc 3.20 (r44) and 3.22 (r45) are.
+  # Deviation D-11. Pinning makes the drift REPRODUCIBLE rather than floating:
+  # unpinned, a future solve could land on Bioc 3.23 and shift every scale
+  # factor again, and we would not know which drift we were looking at.
+  # For the exact ground-truth versions, point
+  # normalization.r_library_override at /home/encent/R/x86_64-pc-linux-gnu-library/4.5
+  - bioconductor-csaw=1.44.0
+  - bioconductor-edger=4.8.2
+  - bioconductor-rtracklayer=1.70.1
+  - bioconductor-rsamtools=2.26.0
+  - bioconductor-biocfilecache=3.0.0
+  - bioconductor-atacseqqc=1.34.0
+  - r-biocmanager
+
+  - pip:
+      - statannotations==0.6.0   # needs seaborn <0.12 and pandas <2.0 — both satisfied

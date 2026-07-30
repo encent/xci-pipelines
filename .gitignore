@@ -1,0 +1,37 @@
+# heavy data — never committed
+*.bam
+*.bai
+*.bw
+*.bigWig
+*.cool
+*.mcool
+*.hic
+*.mlo
+*.h5
+*.npz
+*.fa
+*.fa.gz
+*.fai
+*.gtf
+*.gff3
+*.2bit
+# pipeline state
+.snakemake/
+results/
+logs/
+work/
+# fixture exception: small text fixtures ARE committed, but not their heavy siblings
+!resources/fixtures/**/*.tsv
+!resources/fixtures/**/*.json
+!resources/fixtures/**/*.yaml
+!resources/fixtures/**/*.bed
+!resources/fixtures/**/*.csv
+!resources/fixtures/**/*.md
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# env locks are committed; env build dirs are not
+.conda/
+# bootstrapped by install.sh when mamba is absent
+.mamba/

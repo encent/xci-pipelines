@@ -1,0 +1,10 @@
+# F-7 — coolbox display ranges, hard-coded in 01_08_coolbox_diff_hic_only.py.
+# Wrong values render Fig 4e / EFig 6d at a different contrast.
+hic:   {cmap: YlOrRd, style: matrix, min_value: -9, max_value: -1}
+diff:  {cmap: bwr, style: matrix, min_value: -6, max_value: 6,
+        normalize: expect, diff_method: diff}
+loops: {color: "#2255ff", line_width: 5, side: upper}
+gtf_track_height: {Mecp2: 12, Jarid: 7}
+valley_track_height: 0.3
+depth_ratio: 0.35
+dpi: 300

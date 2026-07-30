@@ -1,0 +1,55 @@
+# =====================================================================
+#  pixel_fixes.tsv  --  FIXTURE (decision D-10)
+#
+#  Hard-coded artefact-pixel repairs, transcribed verbatim from
+#  /home/encent/Projects/Antonia_Edith_01/scripts/00_01_correct_pixels_in_coolers.py
+#  (lines 74-129). These are manual, eyeballed corrections of Capture Hi-C
+#  ligation artefacts at 5 kb; they are human judgement, not an algorithm, so
+#  they ship as data rather than being re-invented in code.
+#
+#  Consumed by:  rule correct_cooler_pixels  (workflow/rules/20_contacts.smk)
+#
+#  Columns
+#  -------
+#  cooler_pattern  fnmatch pattern against the cooler NAME (no .cool suffix).
+#                  The original tested `basename(cf).startswith("Mecp2"|"Jarid")`.
+#  tag             snpsplit tag the fix applies to: G1, G2, or `any` for both.
+#                  The original tested `"G1" in basename(cf)` / `"G2" in ...`.
+#  bin1_start      start1 of the pixel to replace (end1 = bin1_start + 5000).
+#  bin2_start      start2 of the pixel to replace (end2 = bin2_start + 5000).
+#  mode            replacement rule:
+#                    mean    -> rounded mean of whatever subset of the 8
+#                               neighbours (+/-5 kb in each axis) exists.
+#                               `mode=None` in the original.
+#                    top     -> rounded mean of exactly v1,v2,v3,v4,v5
+#                    bottom  -> rounded mean of exactly v4,v5,v6,v7,v8
+#                    left    -> rounded mean of exactly v1,v2,v4,v6,v7
+#                    right   -> rounded mean of exactly v2,v3,v5,v7,v8
+#                  Neighbour numbering, verbatim from `replace()`:
+#                    v1 (-5k,-5k)  v2 (-5k, 0)  v3 (-5k,+5k)
+#                    v4 ( 0 ,-5k)  v5 ( 0 ,+5k)
+#                    v6 (+5k,-5k)  v7 (+5k, 0)  v8 (+5k,+5k)
+#                  NOTE the directional modes index v1..v8 directly, so a
+#                  missing neighbour is a NameError in the original. All four
+#                  directional uses here are interior pixels, so this never
+#                  fired -- but the reimplementation must reproduce the exact
+#                  5-neighbour subset, not a "mean of what exists".
+#
+#  Counts (assert these):  Mecp2 G1 = 2, Mecp2 G2 = 5, Jarid G1 = 1, Jarid G2 = 7
+#  In `fixtures.mode: auto` this whole step is skipped, with a warning.
+# =====================================================================
+cooler_pattern	tag	bin1_start	bin2_start	mode
+Mecp2*	G1	73975000	74060000	mean
+Mecp2*	G2	73970000	74060000	mean
+Mecp2*	any	74220000	74265000	mean
+Mecp2*	G2	73335000	73395000	mean
+Mecp2*	G2	73405000	73615000	top
+Mecp2*	G2	73410000	73615000	bottom
+Jarid*	G1	150780000	150925000	mean
+Jarid*	G2	150710000	150840000	mean
+Jarid*	G2	150780000	150925000	mean
+Jarid*	G2	150795000	150845000	mean
+Jarid*	G2	150800000	150840000	mean
+Jarid*	G2	151055000	151100000	mean
+Jarid*	G2	151715000	152090000	mean
+Jarid*	G2	150520000	151750000	mean

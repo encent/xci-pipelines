@@ -1,0 +1,15 @@
+# Ground-truth scale factors recovered from the ORIGINAL bigWigs.
+# See workflow/scripts/py/recover_scale_factors.py. REPLICATE LEVEL ONLY.
+sample	scale_factor	LibSize	NormFactor	recovered_from	source_bigwig
+CTCF_F3_CTCF-NodTAG_Gall_rep1	0.13291700184345245			chr13,chr19	CTCF_F3_CTCF-NodTAG_Gall_rep1.bw
+CTCF_F3_CTCF-NodTAG_Gall_rep2	0.07888829708099365			chr13,chr19	CTCF_F3_CTCF-NodTAG_Gall_rep2.bw
+CTCF_F3_CTCF-NodTAG_Xa_rep1	0.13291700184345245			chr13,chr19	CTCF_F3_CTCF-NodTAG_Xa_rep1.bw
+CTCF_F3_CTCF-NodTAG_Xa_rep2	0.07888829708099365			chr13,chr19	CTCF_F3_CTCF-NodTAG_Xa_rep2.bw
+CTCF_F3_CTCF-NodTAG_Xi_rep1	0.13291700184345245			chr13,chr19	CTCF_F3_CTCF-NodTAG_Xi_rep1.bw
+CTCF_F3_CTCF-NodTAG_Xi_rep2	0.07888829708099365			chr13,chr19	CTCF_F3_CTCF-NodTAG_Xi_rep2.bw
+CTCF_F3_CTCF-dTAG_Gall_rep1	0.04914670065045357			chr13,chr19	CTCF_F3_CTCF-dTAG_Gall_rep1.bw
+CTCF_F3_CTCF-dTAG_Gall_rep2	0.05838949978351593			chr13,chr19	CTCF_F3_CTCF-dTAG_Gall_rep2.bw
+CTCF_F3_CTCF-dTAG_Xa_rep1	0.04914670065045357			chr13,chr19	CTCF_F3_CTCF-dTAG_Xa_rep1.bw
+CTCF_F3_CTCF-dTAG_Xa_rep2	0.05838949978351593			chr13,chr19	CTCF_F3_CTCF-dTAG_Xa_rep2.bw
+CTCF_F3_CTCF-dTAG_Xi_rep1	0.04914670065045357			chr13,chr19	CTCF_F3_CTCF-dTAG_Xi_rep1.bw
+CTCF_F3_CTCF-dTAG_Xi_rep2	0.05838949978351593			chr13,chr19	CTCF_F3_CTCF-dTAG_Xi_rep2.bw

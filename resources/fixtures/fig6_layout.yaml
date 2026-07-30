@@ -1,0 +1,12 @@
+# F-6 — Fig 6 composite grid, hard-coded in
+# 02_03_make_composite_metaloci_figures copy 2.ipynb.
+# NOT alphabetical and NOT derivable. Wrong order = Fig 6 is silently wrong.
+rows: [CTCF, H3K27me3, H3K27ac, AcMe3, RNA-Seq]
+columns:
+  kdm5c: [violin, Xa_consensus, E6, C5, B1]
+  mecp2: [violin, Xa_consensus, E6, B1, C5, CL30, JTG]
+panel_label: "{label}: {value:.2f}"   # value = METALoci compartmentalization
+note: >
+  The Xi panels are per-clone-normalised (METALOCI_NEW) while the Xa panel is
+  consensus-normalised (METALOCI_NEW_CONSENSUS), so the two are not strictly on
+  the same signal scale. This is what the original did; reproduce it.

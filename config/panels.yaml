@@ -1,0 +1,832 @@
+# ============================================================================
+#  XCI PIPELINE — PANEL REGISTRY
+#
+#  One entry per figure the pipeline emits. `90_visualise.smk` reads this file
+#  and nothing else to decide what to draw; `figure_manifest.tsv` is generated
+#  from it plus the realised files.
+#
+#  You normally do not edit this. To draw fewer figures set
+#  `figures.panels` in config/config.yaml to `paper` or to an explicit list of
+#  paper references (e.g. ["Fig 3a", "Fig 6"]).
+#
+#  ---------------------------------------------------------------------------
+#  FIELDS
+#  ---------------------------------------------------------------------------
+#  id                panel id AND output file stem: results/figures/{group}/{id}.{fmt}
+#                    May be a template, e.g. "boundary_analysis_{clone}", in which
+#                    case `expand:` / `expand_rows:` fan it out. Ids must be unique
+#                    after expansion -- tests/test_panels_complete.py enforces it.
+#  series            optional. Groups several files that are ONE logical panel
+#                    (Fig 6 is two files; EFig 2e/2f/2g is five files, one per
+#                    clone). Paper references are unique per *series*, not per file.
+#  paper_ref         list of published panel references. [] for non-paper figures.
+#  group             output subdirectory under results/figures/.
+#  producer          the `panel_*` rule that draws it.
+#  wildcards         scalar parameters handed to the panel script as `params.spec`.
+#  expand            {wildcard: [values]} -- cartesian product; a value of the form
+#                    "@name" is a selector resolved from the sample sheet / config
+#                    (see workflow/lib/panels.py SELECTORS).
+#  expand_rows       "@name" -- a selector returning an explicit list of wildcard
+#                    dicts, for fan-outs that are not a clean product.
+#  inputs            DOCUMENTATION ONLY. The real input paths come from
+#                    workflow/lib/paths.py via the input function of the producer
+#                    rule; this field exists so a reader can see the dependency
+#                    without reading Snakemake code.
+#  formats           output formats. Each format is its own Snakemake job.
+#  requires_signals  METALoci signals the panel needs. Shortening
+#                    `metaloci.signals` in config makes the panel SKIP (recorded
+#                    in the manifest) instead of failing the DAG.
+#  requires_config   dotted config keys that must be truthy, e.g. qc.enabled.
+#  confidence        high | medium | low. `medium` means the archaeology found
+#                    several candidate output files and could not tell which one
+#                    the paper used; the pipeline renders ALL of them and a human
+#                    picks against paper_figures/20260722_*.pdf.
+#  candidates        for medium-confidence panels: the alternative renderings,
+#                    each emitted as {id}__{candidate}.{fmt}.
+#  notes             anything that would otherwise be rediscovered the hard way.
+# ============================================================================
+
+version: 1
+
+settings:
+  # paper_numbers.tsv checks computed values against the published ones.
+  # true  -> a mismatch fails the `paper_numbers` rule (recommended).
+  # false -> the mismatch is recorded with status=MISMATCH and the run continues.
+  strict_paper_numbers: true
+  # REPORT.html inlines SVG/PNG as data URIs. Panels larger than this are linked.
+  report_max_inline_bytes: 6000000
+  # Panels whose inputs have no producing rule yet (upstream module still a
+  # placeholder) and no file on disk are skipped, not failed. Set false to make
+  # a missing upstream a hard DAG error.
+  skip_panels_without_producers: true
+
+defaults:
+  formats: [svg, pdf]
+  confidence: high
+  group: extras
+
+
+panels:
+
+  # =========================================================================
+  #  FIGURE 1 / FIGURE 2 — pipeline-produced paper panels outside the 25
+  # =========================================================================
+  - id: signal_enrichment_{mark}
+    series: signal_enrichment
+    paper_ref: []                      # per-mark refs are attached below
+    group: figure_01
+    producer: panel_signal_enrichment
+    expand_rows: "@enrichment_rows"
+    inputs: ["qc/enrichment/{mark}_{anchor}.npz  (P.qc)"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      deepTools-style enrichment heatmaps over gene bodies / motifs +/- 200 kb.
+      Fig 1e = CTCF, Fig 2a = H3K27ac, Fig 2d = H3K27me3 (the archaeology notes F.2, open item
+      O-12). NOT gated on qc.enabled -- `signal_enrichment` in 50_qc.smk is
+      deliberately outside that gate because these are published panels.
+
+  # =========================================================================
+  #  FIGURE 2
+  # =========================================================================
+  - id: valley_gene_content_wt
+    series: valley_gene_content_wt
+    paper_ref: ["Fig 2g"]
+    group: figure_02
+    producer: panel_valley_gene_content
+    wildcards: {cohort: WT}
+    inputs:
+      - "features/gene_content/H3K27me3_{clone}_WT_Xi.tsv  (P.gene_content)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      TRAP P-2. Plots the GENE-FILTERED valley set (`filter_valleys_genes`),
+      never the raw HMM BEDs. Published bar totals: E6 375, C5 301, B1 258,
+      JTG 300, CL30 321. The raw set gives 377/304/261/302/324 and looks
+      entirely plausible -- this is the single most likely silent divergence in
+      the pipeline. paper_numbers.tsv asserts the published totals.
+      Row order top->bottom is E6, C5, B1, JTG, CL30 (not sorted).
+      Colours are Okabe-Ito, verbatim from xci_valleys_check_LAST.ipynb cell 18.
+
+  - id: boundary_ctcf_pies_wt
+    series: boundary_ctcf_pies_wt
+    paper_ref: ["Fig 2h"]
+    group: figure_02
+    producer: panel_boundary_ctcf_pies
+    wildcards: {cohort: WT}
+    inputs:
+      - "features/boundary_ctcf/H3K27me3_{clone}_WT_Xi.tsv  (P.boundary_ctcf)"
+      - "features/gene_content/H3K27me3_{clone}_WT_Xi.tsv   (P.gene_content)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      Per-clone pie of CTCF status at ESCAPEE valley boundaries.
+      Published n per clone: 110, 96, 74, 76, 76 (E6, C5, B1, JTG, CL30 order
+      not stated in the paper; the pipeline emits them in that order and writes
+      the n-values into figure_manifest.tsv and paper_numbers.tsv).
+      the archaeology notes F.1 names `ctcf_both_sides_proportion.svg` as the producing file;
+      that file is in fact the both-sides *proportion* plot (last notebook cell),
+      which the pipeline emits separately as `boundary_ctcf_both_sides`. The
+      published pies are the [0,2] panel of `*_boundary_analysis.svg`, which is
+      what this rule redraws standalone. Both are rendered; see also
+      `boundary_analysis_{clone}` below.
+
+  # =========================================================================
+  #  FIGURE 3
+  # =========================================================================
+  - id: loops_comps_wt_kdm5c
+    series: loops_comps_wt_kdm5c
+    paper_ref: ["Fig 3a"]
+    group: figure_03
+    producer: panel_loops_comps_grid
+    wildcards:
+      locus: Jarid
+      roi: full
+      comparison: Xa_vs_Xi
+      kind: both
+      cohort: WT
+      clones: [E6, C5, B1]
+    inputs:
+      - "features/pileups/Xa_vs_Xi/full/{exp}/pileup_{sample}.npz  (P.pileup)"
+      - "features/loops/stats/Xa_vs_Xi/full/loop_stats_{Xa,Xi}.tsv (P.loop_stats)"
+      - "features/compartments/saddle/full/{name}/Saddle_E1_{name}.npz (P.saddle)"
+      - "features/allelic_ratio/Jarid_full_allelic_ratio_stats.csv (P.allelic_ratio_stats)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      3a = Kdm5c (code name `Jarid`), 3b = Mecp2. The legends in
+      $AE/scripts/figure_legends.txt INVERT these two -- figure.pdf (2026-07-25)
+      is authoritative and is what this registry follows.
+      Green "D-score" circles are the RNA-seq allelic ratio, not a METALoci
+      D-score (fixture F-8); truncated Greens with
+      Normalize(0.0424769728421052, 0.40909353528).
+      Pile-ups are drawn with cmap='coolwarm', scale='log', sym=True, vmax=2,
+      height=4, plot_ticks=True, center=3 -- verbatim from 01_04.
+
+  - id: loops_comps_wt_mecp2
+    series: loops_comps_wt_mecp2
+    paper_ref: ["Fig 3b"]
+    group: figure_03
+    producer: panel_loops_comps_grid
+    wildcards:
+      locus: Mecp2
+      roi: full
+      comparison: Xa_vs_Xi
+      kind: both
+      cohort: WT
+      clones: [E6, B1, C5, CL30, JTG]
+    inputs: ["as loops_comps_wt_kdm5c, locus Mecp2"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: "See loops_comps_wt_kdm5c. 3b is Mecp2 despite figure_legends.txt."
+
+  - id: scatter_delta_loop_comp
+    series: scatter_delta_loop_comp
+    paper_ref: ["Fig 3c"]
+    group: figure_03
+    producer: panel_scatter_delta
+    wildcards: {roi: full}
+    inputs:
+      - "features/loops/stats/Xa_vs_Xi/full/loop_stats_{Xa,Xi}.tsv (P.loop_stats)"
+      - "features/compartments/refined_merged/full/saddle_strength_selected_full.tsv (P.saddle_strength_selected)"
+      - "features/metaloci/compartmentalization_full_final.tsv (P.ml_compartmentalization_final)"
+      - "features/allelic_ratio/{locus}_full_allelic_ratio_stats.csv (P.allelic_ratio_stats)"
+    formats: [svg, pdf]
+    confidence: medium
+    candidates: [loops, saddle, xi_xa, ar_loops]
+    notes: >
+      MEDIUM. 02_02_scatter_analysis_metaloci.ipynb writes ~10 scatter SVGs and
+      the archaeology could not mark which one is Fig 3c. All four short-listed
+      candidates are rendered as scatter_delta_loop_comp__{candidate}.svg; a
+      human picks against paper_figures/20260722_Figure_3.pdf.
+      Recipe: seaborn scatterplot, hue = mean allelic ratio, palette Greens,
+      s=100, edgecolor black, per-point text label, manual colorbar, equal
+      aspect, grid off.
+
+  # =========================================================================
+  #  FIGURE 4
+  # =========================================================================
+  - id: valley_gene_content_degron
+    series: valley_gene_content_degron
+    paper_ref: ["Fig 4d"]
+    group: figure_04
+    producer: panel_valley_gene_content
+    wildcards: {cohort: degron}
+    inputs:
+      - "features/gene_content/H3K27me3_{clone}_{CTCF,Rad21}-{No,}dTAG_Xi.tsv"
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      TRAP P-2 again: gene-filtered set. Paired rows, NodTAG above dTAG, clone
+      order top->bottom B1621, E6A7, F3 (verbatim from cell 18's
+      DEGRON_PAIR_ORDER, reversed for barh).
+
+  - id: coolbox_browser_dtag_{locus}_{roi}
+    series: coolbox_browser_dtag
+    paper_ref: ["Fig 4e"]
+    group: figure_04
+    producer: panel_coolbox_browser
+    expand: {locus: "@loci", roi: [full, escape]}
+    requires_config: [coolbox.enabled]
+    inputs:
+      - "contacts/mcool/** (P.mcool)"
+      - "staging/bigwigs_for_coolbox/{track}.bw (P.staged_bigwig)"
+      - "staging/boundaries_for_coolbox/{track}_valleys.bed (P.staged_boundary)"
+      - "genome/allelic_gtf/GRCm38.102_{clone}.gtf (P.allelic_gtf)"
+      - "resources/fixtures/coolbox_display.yaml (F-7)"
+    formats: [pdf]
+    confidence: medium
+    candidates_from_expand: true
+    notes: >
+      the design review P-3: Fig 4e IS a published panel; it is not one of the 25 but
+      it belongs in Figure 4 and therefore carries a real paper_ref.
+      Runs in its own conda env (workflow/envs/coolbox.yaml) -- coolbox and the
+      main env cannot coexist. Display ranges are fixture F-7; wrong values
+      render the panel at a different contrast and nothing complains.
+      MEDIUM: 01_08 writes a whole tree of composite PDFs and the exact file
+      used in Figure 4 is not marked.
+
+  - id: coolbox_browser_xa_xi_{locus}_{roi}
+    series: coolbox_browser_xa_xi
+    paper_ref: []
+    group: extras
+    producer: panel_coolbox_browser
+    expand: {locus: "@loci", roi: [full, escape]}
+    wildcards: {comparison: Xa_vs_Xi}
+    requires_config: [coolbox.enabled]
+    inputs: ["as coolbox_browser_dtag, comparison Xa_vs_Xi"]
+    formats: [pdf]
+    confidence: medium
+    candidates_from_expand: true
+    notes: "The Fig 1c/1d and EFig 6d style views. the archaeology notes F.2 credits pyGenomeTracks for the published version; this is the in-repo equivalent."
+
+  - id: boundary_dtag_{clone}
+    series: boundary_dtag
+    paper_ref: ["Fig 4f", "Fig 4g", "EFig 6b"]
+    group: figure_04
+    producer: panel_boundary_dtag
+    expand: {clone: "@dtag_pair_clones"}
+    inputs:
+      - "features/boundary_dtag/{clone}_{signal}.npz (P.boundary_dtag)"
+      - "features/boundary_ctcf/H3K27me3_{clone}_*-NodTAG_Xi.tsv (P.boundary_ctcf)"
+      - "features/gene_content/H3K27me3_{clone}_*-NodTAG_Xi.tsv (P.gene_content)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      ONE figure, THREE published panels. Rows are the marks
+      (H3K27me3 = Fig 4f, CTCF, H3K27ac = Fig 4g, RNA-Seq); the top row of pies
+      is EFig 6b. Modelling these as three rules would triple the work and
+      guarantee they drift apart.
+      Boundaries are always the NodTAG escaping-valley boundaries -- a fixed
+      position set, so re-calling per condition would change the question.
+      Published n: E6A7 110 boundaries (80 CTCF+ / 30 CTCF-), F3 36 (23 / 13).
+      B1621 is the Rad21 clone; its "CTCF" row is Rad21 and it is not published.
+
+  # =========================================================================
+  #  FIGURE 5
+  # =========================================================================
+  - id: loops_degron_mecp2_ctcf
+    series: loops_degron_mecp2_ctcf
+    paper_ref: ["Fig 5b"]
+    group: figure_05
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Mecp2, roi: full, comparison: dTAG_vs_NodTAG, kind: loops, mark: CTCF}
+    inputs:
+      - "features/pileups/dTAG_vs_NodTAG/full/{exp}/pileup_{sample}.npz (P.pileup)"
+      - "features/loops/stats/dTAG_vs_NodTAG/full/loop_stats.tsv (P.loop_stats)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: "CTCF-dTAG clones E6A7, F3, C5C10."
+
+  - id: comps_degron_mecp2_ctcf
+    series: comps_degron_mecp2_ctcf
+    paper_ref: ["Fig 5c"]
+    group: figure_05
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Mecp2, roi: full, comparison: dTAG_vs_NodTAG, kind: comps, mark: CTCF}
+    inputs:
+      - "features/compartments/refined/full/{name}/Saddle_E1_{name}.npz (P.saddle)"
+      - "features/compartments/refined/full/saddle_strength_selected_full.tsv"
+    formats: [svg, pdf]
+    confidence: high
+
+  - id: loops_degron_mecp2_rad21
+    series: loops_degron_mecp2_rad21
+    paper_ref: ["Fig 5g"]
+    group: figure_05
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Mecp2, roi: full, comparison: dTAG_vs_NodTAG, kind: loops, mark: Rad21}
+    inputs: ["as loops_degron_mecp2_ctcf, Rad21-dTAG B1621"]
+    formats: [svg, pdf]
+    confidence: high
+
+  - id: comps_degron_mecp2_rad21
+    series: comps_degron_mecp2_rad21
+    paper_ref: ["Fig 5h"]
+    group: figure_05
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Mecp2, roi: full, comparison: dTAG_vs_NodTAG, kind: comps, mark: Rad21}
+    inputs: ["as comps_degron_mecp2_ctcf, Rad21-dTAG B1621"]
+    formats: [svg, pdf]
+    confidence: high
+
+  # =========================================================================
+  #  FIGURE 6
+  # =========================================================================
+  - id: metaloci_composite_{locus_slug}_wt
+    series: metaloci_composite
+    paper_ref: ["Fig 6"]
+    group: figure_06
+    producer: panel_metaloci_composite
+    expand_rows: "@fig6_composites"
+    requires_signals: [CTCF, H3K27me3, H3K27ac, AcMe3, RNA-Seq]
+    inputs:
+      - "results/figures/extras/metaloci_gaudi_*_gtp.pdf  (panel_metaloci_gaudi)"
+      - "results/figures/extras/metaloci_violin_*.pdf     (panel_metaloci_violin)"
+      - "features/metaloci/compartmentalization_full_final.tsv (P.ml_compartmentalization_final)"
+      - "features/metaloci/consensus/compartmentalization_full.tsv (P.ml_compartmentalization)"
+      - "resources/fixtures/fig6_layout.yaml (F-6)"
+    formats: [pdf, svg]
+    confidence: high
+    notes: >
+      TRAP F-6. The grid order is hard-coded in
+      "02_03_make_composite_metaloci_figures copy 2.ipynb", is NOT alphabetical
+      and is NOT derivable from anything else. It lives in
+      resources/fixtures/fig6_layout.yaml: rows CTCF, H3K27me3, H3K27ac, AcMe3,
+      RNA-Seq; columns Kdm5c = violin, Xa_consensus, E6, C5, B1 and Mecp2 =
+      violin, Xa_consensus, E6, B1, C5, CL30, JTG. Never hard-code it here.
+      Assembly is a PyMuPDF montage, column-major, label
+      f"{label}: {value:.2f}" at fontsize 30, value = METALoci
+      compartmentalization; column 0 (the violin) advances y by 150, the rest
+      by 20.
+      The Xi panels are per-clone-normalised and the Xa panel is
+      consensus-normalised, so the two are NOT on the same signal scale. That
+      is what the original did.
+      Requires every one of the six METALoci signals; shortening
+      metaloci.signals skips this panel rather than silently dropping a row.
+
+  # =========================================================================
+  #  EXTENDED DATA FIGURE 2
+  # =========================================================================
+  - id: boundary_analysis_{clone}
+    series: boundary_analysis_wt
+    paper_ref: ["EFig 2e", "EFig 2f", "EFig 2g"]
+    group: extended_02
+    producer: panel_boundary_analysis
+    expand: {clone: "@wt_clones"}
+    inputs:
+      - "features/boundary_profile/{track}_{signal}.npz  (P.boundary_profile)  <- NOT P.stackup"
+      - "features/boundary_ctcf/{track}.tsv (P.boundary_ctcf)"
+      - "features/gene_content/{track}.tsv  (P.gene_content)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      TRAP R-2 / P-1. ONE figure, THREE published panels: left = the 2x2
+      Escapee x CTCF contingency table with a two-sided Fisher p (EFig 2g),
+      middle = H3K27me3 metaplot (EFig 2e), right = H3K27ac metaplot (EFig 2f).
+      Fed from P.boundary_profile -- the NO-background-subtraction path from
+      xci_valleys_check_LAST.ipynb. P.stackup subtracts a 100-shift random
+      circular background and produces plausible, WRONG curves here. The two
+      rules read the same inputs and differ only in arithmetic.
+      One file per WT clone; five files are one logical panel.
+
+  - id: boundary_analysis_degron_{clone}
+    series: boundary_analysis_degron
+    paper_ref: []
+    group: extras
+    producer: panel_boundary_analysis
+    expand: {clone: "@degron_nodtag_clones"}
+    inputs:
+      - "features/boundary_profile/{track}_{signal}.npz  (P.boundary_profile)  <- NOT P.stackup"
+      - "features/boundary_ctcf/{track}.tsv (P.boundary_ctcf)"
+      - "features/gene_content/{track}.tsv  (P.gene_content)"
+    formats: [svg, pdf]
+    confidence: high
+    notes: "Same producer, degron NodTAG clones. Not published."
+
+  # =========================================================================
+  #  EXTENDED DATA FIGURE 3
+  # =========================================================================
+  - id: violin_loops_xa_vs_xi
+    series: violin_loops_xa_vs_xi
+    paper_ref: ["EFig 3a"]
+    group: extended_03
+    producer: panel_violin_loops
+    wildcards: {comparison: Xa_vs_Xi, roi: full, stat: mean, called_on: Xa}
+    inputs: ["features/loops/stats/Xa_vs_Xi/full/loop_stats_{Xa,Xi}.tsv (P.loop_stats)"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      Paired violin, N = 15 clone-alleles (9 Mecp2 + 6 Jarid), Wilcoxon
+      signed-rank two-sided plus both one-sided p-values in the title, exactly
+      as 02_00_analysis_loop_chromosight.ipynb. ylim (0, 4.0), figsize (8, 6),
+      inner="quart", color "0.9", paired dots joined by grey lines.
+      The companion heatmap is emitted as violin_loops_*__heatmap.
+
+  - id: violin_loops_dtag_{mark}
+    series: violin_loops_dtag
+    paper_ref: []
+    group: extras
+    producer: panel_violin_loops
+    expand: {mark: [CTCF, Rad21]}
+    wildcards: {comparison: dTAG_vs_NodTAG, roi: full, stat: mean, called_on: NodTAG}
+    inputs: ["features/loops/stats/dTAG_vs_NodTAG/full/loop_stats.tsv"]
+    formats: [svg, pdf]
+    confidence: high
+
+  - id: violin_saddle_xa_vs_xi
+    series: violin_saddle_xa_vs_xi
+    paper_ref: ["EFig 3b"]
+    group: extended_03
+    producer: panel_violin_saddle
+    wildcards: {comparison: Xa_vs_Xi, roi: full, scope: refined_merged}
+    inputs: ["features/compartments/refined_merged/full/saddle_strength_selected_full.tsv"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: "Same violin recipe as violin_loops; the quantity is the saddle (AA+BB)/(AB+BA) score."
+
+  - id: violin_saddle_dtag_{mark}
+    series: violin_saddle_dtag
+    paper_ref: []
+    group: extras
+    producer: panel_violin_saddle
+    expand: {mark: [CTCF, Rad21]}
+    wildcards: {comparison: dTAG_vs_NodTAG, roi: full, scope: refined}
+    inputs: ["features/compartments/refined/full/saddle_strength_selected_full.tsv"]
+    formats: [svg, pdf]
+    confidence: high
+
+  # =========================================================================
+  #  EXTENDED DATA FIGURE 6
+  # =========================================================================
+  - id: density_ma_h3k27me3
+    series: density_ma_h3k27me3
+    paper_ref: ["EFig 6a"]
+    group: extended_06
+    producer: panel_density_ma
+    wildcards: {mark: H3K27me3, win: 100kb, allele: Xi, mask: antivalley}
+    inputs: ["features/density/{clone}_{allele}_{win}_{mask}.tsv (P.density)"]
+    formats: [svg, pdf]
+    confidence: medium
+    candidates: [antivalley_ma, allcoverage_ma, antivalley_density, allcoverage_density]
+    notes: >
+      MEDIUM. Twelve candidate panels exist across
+      allele {Xi,Xa,Gall} x mask {antivalley,allcoverage} x kind {density,MA}.
+      The paper uses the MA set; which allele/mask pair is not marked.
+      All four Xi candidates are rendered as density_ma_h3k27me3__{candidate}.
+      3x3 grid: rows = clones, columns = chr7 / chrX / both. KDE-coloured
+      scatter (subsample 5000, default_rng(42)), annotated with Pearson r,
+      Lin's CCC and median LFC. A = log2 mean, M = log2(dTAG/NodTAG).
+
+  - id: valley_venn_dtag
+    series: valley_venn_dtag
+    paper_ref: ["EFig 6c"]
+    group: extended_06
+    producer: panel_valley_venn
+    wildcards: {scope: escaping}
+    inputs: ["features/valley_overlap/{clone}_{scope}.tsv (P.valley_overlap)"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      venn2 per clone in a 1x3 grid, figsize (21, 7), set labels
+      "dTAG (n=...)" / "NodTAG (n=...)". Published cardinalities
+      (dTAG-only / shared / NodTAG-only): E6A7 1/44/11, F3 1/12/6.
+      Built from the GENE-FILTERED valley BEDs, both conditions.
+
+  - id: valley_venn_all
+    series: valley_venn_all
+    paper_ref: []
+    group: extras
+    producer: panel_valley_venn
+    wildcards: {scope: all}
+    inputs: ["features/valley_overlap/{clone}_all.tsv"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: "The all-valley variant, valley_overlap_dTAG_vs_NodTAG.svg. Not published."
+
+  # =========================================================================
+  #  EXTENDED DATA FIGURES 8 and 10
+  # =========================================================================
+  - id: loops_degron_kdm5c_ctcf
+    series: loops_degron_kdm5c_ctcf
+    paper_ref: ["EFig 8c"]
+    group: extended_08
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Jarid, roi: full, comparison: dTAG_vs_NodTAG, kind: loops, mark: CTCF}
+    inputs: ["as loops_degron_mecp2_ctcf, locus Jarid"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: "Kdm5c == Jarid. CTCF-dTAG clones E6A7, C5C10."
+
+  - id: comps_degron_kdm5c_ctcf
+    series: comps_degron_kdm5c_ctcf
+    paper_ref: ["EFig 8d"]
+    group: extended_08
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Jarid, roi: full, comparison: dTAG_vs_NodTAG, kind: comps, mark: CTCF}
+    inputs: ["as comps_degron_mecp2_ctcf, locus Jarid"]
+    formats: [svg, pdf]
+    confidence: high
+
+  - id: loops_degron_kdm5c_rad21
+    series: loops_degron_kdm5c_rad21
+    paper_ref: ["EFig 10c"]
+    group: extended_10
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Jarid, roi: full, comparison: dTAG_vs_NodTAG, kind: loops, mark: Rad21}
+    inputs: ["as loops_degron_mecp2_rad21, locus Jarid"]
+    formats: [svg, pdf]
+    confidence: high
+
+  - id: comps_degron_kdm5c_rad21
+    series: comps_degron_kdm5c_rad21
+    paper_ref: ["EFig 10d"]
+    group: extended_10
+    producer: panel_loops_comps_grid
+    wildcards: {locus: Jarid, roi: full, comparison: dTAG_vs_NodTAG, kind: comps, mark: Rad21}
+    inputs: ["as comps_degron_mecp2_rad21, locus Jarid"]
+    formats: [svg, pdf]
+    confidence: high
+
+  # =========================================================================
+  #  SECTION 6.5 EXTRAS — non-paper figures the original also produced
+  # =========================================================================
+  - id: boundary_ctcf_pies_degron
+    series: boundary_ctcf_pies_degron
+    paper_ref: []
+    group: extras
+    producer: panel_boundary_ctcf_pies
+    wildcards: {cohort: degron}
+    inputs: ["features/boundary_ctcf/H3K27me3_{clone}_*-NodTAG_Xi.tsv"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: "The degron pies as a standalone figure. EFig 6b itself is produced by panel_boundary_dtag."
+
+  - id: boundary_ctcf_both_sides
+    series: boundary_ctcf_both_sides
+    paper_ref: []
+    group: extras
+    producer: panel_boundary_ctcf_pies
+    wildcards: {cohort: both_sides}
+    inputs: ["features/boundary_ctcf/*.tsv for all WT + degron NodTAG tracks"]
+    formats: [svg, pdf]
+    confidence: high
+    notes: >
+      `ctcf_both_sides_proportion.svg` -- proportion of valleys with a peak
+      within 50 kb on BOTH sides among those with a peak on at least one side,
+      with 95 % Wald CIs and a binomial test against 0.5. the archaeology notes F.1 attributes
+      Fig 2h to this file; the published pies are elsewhere (see
+      boundary_ctcf_pies_wt). Rendered so the reader can decide.
+
+  - id: ma_plot_{normgroup}
+    series: ma_plot
+    paper_ref: []
+    group: qc
+    producer: panel_ma_plot
+    expand: {normgroup: "@normgroups"}
+    inputs: ["work/scalefactors/{normgroup}.counts.tsv.gz (P.scalefactors, kind=counts)"]
+    formats: [png]
+    confidence: high
+    notes: >
+      csaw normalisation QC. The 10 kb bin-count matrix comes out of
+      `csaw_counts`; the MA plots the R script used to draw are redrawn here so
+      that no R rule writes an image.
+
+  - id: valley_locus_{locus}_{track}
+    series: valley_locus
+    paper_ref: []
+    group: qc
+    producer: panel_valley_locus
+    expand: {locus: "@loci", track: "@me3_tracks"}
+    inputs: ["features/valleys/chrX/{track}_states.tsv.gz (P.valley_states)"]
+    formats: [png]
+    confidence: high
+    notes: >
+      Line plot of the 5 kb H3K27me3 signal with valley bins shaded red
+      (fill_between, alpha 0.2), figsize (12, 4), dpi 300, PNG.
+      Windows: Jarid chrX:150,400,000-152,350,000; Mecp2 chrX:73,315,000-74,475,000.
+      Deviation D-2: the pipeline emits 36 degron figures where the ground truth
+      has 34, because we do not swallow the empty F3_CTCF-NodTAG_Gall valley set.
+
+  - id: valley_sizes
+    series: valley_sizes
+    paper_ref: []
+    group: qc
+    producer: panel_valley_sizes
+    inputs: ["features/valley_sizes.tsv (P.valley_sizes)"]
+    formats: [pdf, png]
+    confidence: high
+    notes: "One histogram per clone, 100 bins, sizes < 500 kb, husl palette."
+
+  - id: valley_xa_xi_venn_{track}
+    series: valley_xa_xi_venn
+    paper_ref: []
+    group: qc
+    producer: panel_valley_xa_xi_venn
+    expand: {track: "@me3_xi_tracks"}
+    inputs: ["features/valley_xa_xi/{track}.tsv (P.valley_xa_xi)"]
+    formats: [svg]
+    confidence: high
+    notes: "Deviation D-4: side vocabulary is L/R here where the original wrote left/right."
+
+  - id: frip
+    series: frip
+    paper_ref: []
+    group: qc
+    producer: panel_frip
+    requires_config: [qc.enabled]
+    inputs: ["qc/frip.tsv (P.qc)"]
+    formats: [png]
+    confidence: high
+
+  - id: peak_venn
+    series: peak_venn
+    paper_ref: []
+    group: qc
+    producer: panel_peak_venn
+    requires_config: [qc.enabled]
+    inputs: ["qc/peak_overlap.tsv (P.qc)"]
+    formats: [png]
+    confidence: high
+
+  - id: correlation_{normgroup}
+    series: correlation
+    paper_ref: []
+    group: qc
+    producer: panel_correlation
+    expand: {normgroup: "@normgroups"}
+    requires_config: [qc.enabled]
+    inputs: ["qc/correlation/{normgroup}.npz (P.qc)"]
+    formats: [png]
+    confidence: high
+    notes: "PCA plus Spearman and Pearson heatmaps, one file per normalisation group."
+
+  - id: fragment_sizes
+    series: fragment_sizes
+    paper_ref: []
+    group: qc
+    producer: panel_fragment_sizes
+    requires_config: [qc.enabled]
+    inputs: ["qc/fragment_sizes/{sample}.tsv (P.qc)"]
+    formats: [png]
+    confidence: high
+
+  - id: cooler_qc_{cooler}
+    series: cooler_qc
+    paper_ref: []
+    group: qc
+    producer: panel_cooler_qc
+    expand: {cooler: "@coolers"}
+    inputs: ["contacts/mcool/individual/{cooler}.mcool (P.mcool)"]
+    formats: [png]
+    confidence: high
+    notes: "00_08_viz_coolers.py equivalent: the balanced matrix at the view window."
+
+  - id: loop_overlay_{name}
+    series: loop_overlay
+    paper_ref: []
+    group: qc
+    producer: panel_loop_overlay
+    expand: {name: "@merged_loop_coolers"}
+    inputs:
+      - "features/loops/raw/{name}/{name}.tsv (P.loops_raw)"
+      - "features/loops/refined/{name}/{name}.tsv (P.loops_refined)"
+      - "contacts/mcool/merged_loops/{name}.mcool (P.mcool)"
+    formats: [png]
+    confidence: high
+    notes: >
+      Before/after refinement overlays -- the visual record of the manual
+      curation step that fixture `loops_refined/` freezes.
+      Raw counts 55/32/41/26 (Jarid_Xa, Jarid_Xi, Mecp2_Xa, Mecp2_Xi),
+      refined 14/13/10/12.
+
+  - id: eigenvector_{roi}_{name}
+    series: eigenvector
+    paper_ref: []
+    group: extras
+    producer: panel_eigenvector
+    expand_rows: "@eig_rows"
+    inputs: ["features/compartments/eigs/{roi}/{name}/Comp_{name}.tsv (P.eigs)"]
+    formats: [svg]
+    confidence: high
+    notes: >
+      All three eigenvectors on one axis. The report also surfaces
+      work/features/compartments/eigenvector_orientation.tsv -- a silent
+      eigenvector sign flip mirrors every saddle plot and would corrupt 15 of
+      the 25 panels, and this is the only place it is visible.
+
+  - id: saddle_{roi}_{name}_{eig}
+    series: saddle
+    paper_ref: []
+    group: extras
+    producer: panel_saddle
+    expand_rows: "@saddle_rows"
+    inputs: ["features/compartments/saddle/{roi}/{name}/Saddle_{eig}_{name}.npz (P.saddle)"]
+    formats: [svg]
+    confidence: high
+    notes: >
+      Saddle heatmap plus the (AA+BB)/(AB+BA) strength profile.
+      Score = (mean[:8,:8] + mean[32:,32:]) / (mean[:8,32:] + mean[32:,:8])
+      over the 38-bin saddle with qrange (0.025, 0.975).
+
+  - id: pileup_{comparison}_{roi}_{exp}_{sample}
+    series: pileup
+    paper_ref: []
+    group: extras
+    producer: panel_pileup
+    expand_rows: "@pileup_rows"
+    inputs: ["features/pileups/{comparison}/{roi}/{exp}/pileup_{sample}.npz (P.pileup)"]
+    formats: [svg, png]
+    confidence: high
+    notes: "cmap='coolwarm', scale='log', sym=True, vmax=2, height=4, plot_ticks=True, center=3."
+
+  - id: stackup_composite_{track}_{signal}_{variant}
+    series: stackup_composite
+    paper_ref: []
+    group: extras
+    producer: panel_stackup_composite
+    expand_rows: "@stackup_rows"
+    inputs: ["features/stackups/{track}_{signal}_{variant}.npz (P.stackup)"]
+    formats: [pdf, png]
+    confidence: high
+    notes: >
+      The `Stackups_*` lineage -- WITH the 100-shift random background
+      subtraction. NONE of these reached the paper (the archaeology notes 5B). They exist
+      because the same rule writes the boundaries/{all,motif_yes,motif_no} sets
+      that are ground truth. Never route a paper panel here (correction R-2).
+      Violin significance uses config.legacy.stackup_violin_test; the original's
+      `annotate_violin_mwu` claimed Mann-Whitney and called ttest_rel
+      (deviation D-5). We do not port the bug.
+
+  - id: valley_density_{clone}_{allele}
+    series: valley_density
+    paper_ref: []
+    group: qc
+    producer: panel_valley_density
+    expand_rows: "@density_rows"
+    inputs: ["features/density/{clone}_{allele}_{win}_{mask}.tsv (P.density)"]
+    formats: [svg]
+    confidence: high
+    notes: "The density-scatter counterparts of density_ma_h3k27me3, all alleles and masks."
+
+  - id: metaloci_gaudi_{run}_{dataset}_{signal}
+    series: metaloci_gaudi
+    paper_ref: []
+    group: extras
+    producer: panel_metaloci_gaudi
+    expand_rows: "@metaloci_rows"
+    inputs: ["features/metaloci/{run}/{dataset}/ (P.ml_dir, P.ml_signals, P.ml_mlo)"]
+    formats: [pdf]
+    confidence: high
+    notes: >
+      Runs the external `metaloci figure` in its own conda env:
+        metaloci figure -w {dir} -s {ds}.signals -g chrX:{start}-{end}_0 -m -t {threads} -e
+      Emits the whole plot family (_hic, _signal, _kk, _lmi, _gsp, _gtp).
+      `_gtp` is the Gaudi TYPE plot (LMI quadrant colouring) -- that is the
+      Fig 6 panel type, and it is the file panel_metaloci_composite montages.
+
+  - id: metaloci_kk_{run}_{dataset}
+    series: metaloci_kk
+    paper_ref: []
+    group: extras
+    producer: panel_metaloci_kk
+    expand_rows: "@metaloci_kk_rows"
+    inputs: ["features/metaloci/{run}/{dataset}/chrX/plots/{KK,mixed_matrices}/"]
+    formats: [pdf]
+    confidence: high
+    notes: "Kamada-Kawai layout and mixed-matrix plots. Same external tool, same env."
+
+  - id: metaloci_scatter_{locus}
+    series: metaloci_scatter
+    paper_ref: []
+    group: extras
+    producer: panel_metaloci_scatter
+    expand: {locus: "@loci"}
+    inputs: ["features/metaloci/compartmentalization_full_final.tsv", "loop + saddle tables"]
+    formats: [svg]
+    confidence: high
+
+  - id: metaloci_violin_{locus}_{signal}
+    series: metaloci_violin
+    paper_ref: []
+    group: extras
+    producer: panel_metaloci_violin
+    expand_rows: "@metaloci_signal_rows"
+    inputs: ["features/metaloci/{run}/compartmentalization_{roi}.tsv (P.ml_compartmentalization)"]
+    formats: [pdf, svg]
+    confidence: high
+    notes: >
+      Xa vs Xi compartmentalization violin per locus and signal. The
+      H3K27ac/H3K27me3/CTCF/AcMe3/RNA-Seq files are column 0 of the Fig 6
+      composite, so this panel is a Fig 6 dependency and not merely an extra.
+
+  - id: metaloci_heatmap_{locus}_{signal}
+    series: metaloci_heatmap
+    paper_ref: []
+    group: extras
+    producer: panel_metaloci_heatmap
+    expand_rows: "@metaloci_signal_rows"
+    inputs: ["features/metaloci/{run}/compartmentalization_{roi}.tsv"]
+    formats: [pdf, svg]
+    confidence: high
+    notes: "The heatmap companion of metaloci_violin; all six signals."

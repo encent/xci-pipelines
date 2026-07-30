@@ -1,0 +1,415 @@
+# ============================================================================
+#  XCI PIPELINE — configuration
+#
+#  Edit the blocks marked  [EDIT ME].  Everything else reproduces the
+#  Nature Genetics paper and should be left alone.
+#
+#  Full annotation: docs/CONFIGURE.md
+# ============================================================================
+
+pipeline_version: "1.0.0"
+
+# ------------------------------------------------------------- [EDIT ME] ---
+paths:
+  data_dir:      /mnt/scratch/nikolai/Antonia/xci-pipeline-data
+  resources_dir: "{data_dir}/resources"
+  results_dir:   "{data_dir}/results"
+  log_dir:       "{data_dir}/logs"
+  tmpdir:        "{data_dir}/tmp"
+  inputs:
+    # READ-ONLY to the pipeline. The only thing done to these is `ln -s`.
+    bam_dirs:
+      H3K27me3_WT:   /mnt/scratch/nikolai/Antonia/BAMS_WT_H3K27me3
+      H3K27ac_WT:    /mnt/scratch/nikolai/Antonia/BAMS_WT_H3K27ac
+      CTCF_WT:       /mnt/scratch/nikolai/Antonia/BAMS_WT_CTCF
+      degron_all:    /mnt/scratch/nikolai/Antonia/all_bams
+      RNAseq_WT:     /mnt/scratch/nikolai/Antonia/OWNCLOUD_LATEST_19_12_2025/rnaseq_bams/WT
+      RNAseq_degron: /mnt/scratch/nikolai/Antonia/OWNCLOUD_LATEST_19_12_2025/rnaseq_bams/degron
+    cooler_dir:      /home/encent/Projects/Antonia_Edith_01/data/coolers
+    # Allele-specific RNA-seq mean-ratio tables (the "D-score" source, 01_07).
+    # READ-ONLY; consumed by allelic_gtf / allelic_ratio_stats.
+    rnaseq_allelic_ratio:
+      wt:     /home/encent/Projects/Antonia_Edith_01/data/data_Marc_10.2023/RNAseq/tables/ProjectCTCF_WT_RNAseqData_MeanratiosOnly.csv
+      degron: /home/encent/Projects/Antonia_Edith_01/data/data_Marc_10.2023/RNAseq/tables/combined_RNAseq_allDegron_onlyMetaLociClones.csv
+  sheets:
+    samples: config/samples.tsv
+    coolers: config/coolers.tsv
+  panels: config/panels.yaml
+
+# ------------------------------------------------------------- [EDIT ME] ---
+genome:
+  build: mm10                       # == GRCm38
+  chrom_sizes: auto                 # auto = download, or an absolute path
+  blacklist:   auto                 # ENCODE mm10 blacklist v2
+  fasta:       auto                 # GC phasing only (2.8 G)
+  gtf:         auto                 # Ensembl GRCm38 release 102 (the archaeology notes OQ-7)
+  gtf_release: 102
+  gff3_x:      auto
+  gencode_gtf: auto                 # vM25 — TSS extraction only
+  jaspar_motif: MA0139.1            # CTCF; AnnotationHub AH104755
+  urls:
+    chrom_sizes: https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
+    blacklist:   https://github.com/Boyle-Lab/Blacklist/raw/master/lists/mm10-blacklist.v2.bed.gz
+    fasta:       https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.fa.gz
+    gtf:         https://ftp.ensembl.org/pub/release-102/gtf/mus_musculus/Mus_musculus.GRCm38.102.chr.gtf.gz
+    gff3_x:      https://ftp.ensembl.org/pub/release-102/gff3/mus_musculus/Mus_musculus.GRCm38.102.chromosome.X.gff3.gz
+    gencode_gtf: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M25/gencode.vM25.annotation.gtf.gz
+
+# --------------------------------------------------------------------------
+# CHROMOSOMES — two independent sets (decision D-04).
+#
+# csaw's TMM MUST run on autosomes. chrX is deliberately excluded because
+# allelic and clone-genotype differences corrupt TMM.
+# *** DO NOT ADD chrX TO `csaw`. *** The pipeline will refuse to start.
+# --------------------------------------------------------------------------
+chromosomes:
+  csaw: [chr2, chr3, chr4, chr5, chr7, chr8, chr9, chr10,
+         chr13, chr14, chr15, chr17, chr18, chr19]
+  downstream:     [chrX]            # valleys, METALoci, Hi-C, figures
+  valley_control: [chr7]            # the autosome control valley set
+  test: null                        # set by profiles/test; scopes comparison gates
+
+# ------------------------------------------------------------- [EDIT ME] ---
+loci:
+  Mecp2:
+    chrom: chrX
+    regions:
+      non_escape: [73315000, 73645000]
+      escape:     [73645000, 74475000]
+      full:       [73315000, 74475000]
+    view_window: [73315000, 74475000]
+  Jarid:                            # the code name; the paper calls it Kdm5c
+    chrom: chrX
+    regions:
+      non_escape: [150400000, 151800000]
+      escape:     [151800000, 152350000]
+      full:       [150400000, 152350000]
+    view_window: [150400000, 152350000]
+  display_names:
+    Jarid: Kdm5c
+    Mecp2: Mecp2
+
+# --------------------------------------------------------------- SIGNAL ---
+normalization:
+  method: compos                    # composition bias; `eff` was abandoned
+  scale_factor_source: compute      # compute | fixture   (plan 9.2, 7.1.1)
+  scale_factor_recovery_chroms: [chr19, chr13]   # >=2 autosomes; bit-equality asserted
+  r_library_override: null          # D-11 pin of last resort; see docs/CONFIGURE.md
+  csaw:
+    bin_width: 10000
+    pe: both
+    max_frag: 300
+    minq: null                      # readParam(minq=NA) — no MAPQ filter here
+    dedup: false
+    norm_method: TMM
+  scale_factor_formula: "1e6 / (LibSize * NormFactor)"
+  bam_coverage:
+    bin_size: 10                    # replicate-level grid. NOT 20.
+    normalize_using: None
+    extend_reads: true
+    center_reads_marks: [CTCF, Rad21]
+    no_extend_marks: [RNA-Seq]
+    effective_genome_size: null     # never set in the live path
+  merge:
+    operation: mean                 # every mark, RNA-Seq included
+    bin_sizes:
+      merged: 20
+      merged_5k: 5000
+      rep_5k: 5000
+    single_replicate_self_average: true   # CL30 H3K27ac has rep1 only
+  acme3:
+    formula: "log2(H3K27ac / H3K27me3)"
+    bw_bin_size: 20                 # 20 bp, not 5 kb
+    bedgraph_bin_size: 5000
+    wt_h3k27ac_input_type: selected # asymmetric on purpose
+    wt_h3k27me3_input_type: all
+  consensus:
+    bin_size: 5000
+    tool: bigwigAverage             # requires deepTools >= 3.5.5
+    groups:
+      NodTAG-or-WT: {conditions: [WT, CTCF-NodTAG, Rad21-NodTAG]}
+      CTCF-dTAG:    {conditions: [CTCF-dTAG]}
+    marks: [H3K27me3, H3K27ac, AcMe3, CTCF, RNA-Seq]   # no Rad21 consensus
+    acme3_source: acme3_bw20        # reproduces the original mean-of-log2
+  input_type_filters:
+    WT_H3K27ac: {drop: ["CL30.*rep2"]}   # the ONLY live `selected` run
+
+# --------------------------------------------------------------- LEGACY ---
+legacy:
+  # D-03. true = reproduce the original positional broadcast bit-for-bit.
+  # SCOPED (BUG-B): applies ONLY to the normgroups listed below. The original
+  # mis-paired just the WT H3K27ac `selected` run -- the only live run with an
+  # ODD Gall count. Applying it everywhere corrupts H3K27me3/CTCF/Rad21/RNA-Seq,
+  # which the original never mis-paired, and every valley and METALoci signal
+  # downstream with them.
+  h3k27ac_positional_scalefactors: false
+  legacy_normgroups: [WT_H3K27ac]
+  stackup_flip_rule: side                 # side (correct) | parity (original plain variant)
+  stackup_violin_test: mannwhitneyu       # original called ttest_rel while claiming MWU
+
+# -------------------------------------------------------------- VALLEYS ---
+valleys:
+  resolution: 5000
+  region_size_threshold: 500000
+  hmm:
+    n_components: 2
+    covariance_type: diag
+    n_iter: 15
+    random_state: 42
+    min_covar: 0.001
+    tol: 0.01
+  # ---- V-C: BLAS thread count. AFFECTS THE OUTPUT. FROZEN AT 2. --------
+  # hmmlearn initialises the HMM means with sklearn KMeans, whose parallel
+  # reduction order depends on the thread count, so this value CHANGES WHICH
+  # VALLEYS ARE CALLED. Measured on H3K27me3_E6_WT_Xi: 1 -> 378 valleys,
+  # 2 -> 377 (byte-identical to ground truth), 4 -> 377 (byte-identical),
+  # 8 -> 320 with the two component means in opposite order.
+  #
+  # FROZEN AT 2 on two independent grounds that agree:
+  #   * accuracy -- the full 51-track sweep gives 7/11 count-exact on the Xi
+  #     acceptance set, against 6/11 at N=4 and 4/11 unset (31/30/28 over all
+  #     50 tracks). N=1 is DISQUALIFIED: it breaks the C5 Xi guard, 304 -> 263.
+  #   * portability -- threadpool_limits is a CEILING, so N=4 silently degrades
+  #     to 2 on a two-core machine while N=2 is honourable anywhere. A value
+  #     that means something different on a laptop is not a pinned value.
+  #
+  # The BLAS backend is measured IRRELEVANT: 0.3.21 and the orphaned January
+  # 0.3.23.dev agree exactly at all five thread settings, verified at runtime.
+  # So the axis is thread count alone.
+  #
+  # Keep this in step with scikit-learn's pin in environment.yml -- KMeans is
+  # the mechanism, and pinning one without the other reopens the defect.
+  # *** THE LIMIT MUST APPLY TO EVERY RUNTIME, NOT JUST BLAS. ***
+  # Do NOT "helpfully" add user_api="blas" when honouring this key. The OpenMP
+  # runtime is load-bearing too, and capping BLAS alone silently fails:
+  #
+  #     E6 Xi   BLAS=2 / OpenMP=48  ->  320 valleys
+  #     E6 Xi   BLAS=2 / OpenMP=2   ->  377, byte-identical to ground truth
+  #
+  # A harness did exactly this and produced a plausible, wrong sweep table. The
+  # shipped code is correct -- call_valleys.py and lib/threading.py both use a
+  # bare threadpool_limits(limits=N) with no user_api, which caps both. The key
+  # is NAMED blas_threads for continuity with the frozen decision record; it
+  # means "numeric threads". Renaming it now would break that audit trail, so
+  # the warning lives here instead.
+  #
+  # THREE things must hold together, and any one alone reopens V-C:
+  #   1. this thread pin,
+  #   2. scikit-learn's pin in environment.yml (KMeans is the mechanism),
+  #   3. capping BOTH runtimes, not just BLAS.
+  blas_threads: 2
+  valley_state: argmin_of_means
+  merge_gap: 0                      # bioframe.merge default: adjacency only
+  emit_gall: true
+  drop_leading_gap: false           # RULED (O-7): the chrX:0-3,285,000 "valley" is the mm10
+                                    # assembly gap, but it survives the 3-gene filter and IS
+                                    # counted in the published Fig 2g bars. Reproduce it.
+  # ---- Fig 4d valley source (D-18) -----------------------------------
+  # Fig 2g reproduces FROM COMPUTATION (375/301/258/300/321, exact), so it uses
+  # no fixture. Fig 4d does not: our four CTCF-degron Xi tracks come out at
+  # 293/291/343/204 against the published 321/281/351/205.
+  #
+  #   fixture  (default) draw Fig 4d from resources/fixtures/valleys_fig4d/,
+  #                      i.e. exactly as published. The run log and
+  #                      provenance.json say so explicitly -- never silent.
+  #   computed           draw Fig 4d from our own calls; the panel will then
+  #                      show 293/291/343/204.
+  #
+  # Either way the pipeline computes its own valleys, so the comparison is
+  # always available. ONLY those four tracks are affected -- the other seven Xi
+  # tracks, including BOTH B1621 Rad21 conditions, reproduce count-exactly and
+  # a fixture there would mask a real regression.
+  fig4d_source: fixture
+  exclude_genes:                    # the 3-gene filter behind Fig 2g / 4d
+    - {name: Mid1,   chrom: chrX, start: 169685199, end: 170005736}
+    - {name: Tmem29, chrom: chrX, start: 150397773, end: 150459154}
+    - {name: Firre,  chrom: chrX, start:  50555744, end:  50635321}
+  boundaries:
+    ctcf_inside_flank: 50000
+    ctcf_outside_flank: 10000
+    motif_distance: 1000
+    side_vocabulary: ["L", "R"]
+  stackups:
+    flank: 100000
+    nbins: 100
+    nbins_valley_body: 50
+    background_shifts: 100
+    background_seed_base: 42
+    aggregate: mean
+  boundary_analysis:                # panel_boundary_analysis — NO background subtraction
+    flank: 100000
+    nbins: 100
+  gene_classes: [escapee, silent, not_expressed, intergenic]
+  escapee_threshold: 0.1
+  gene_masked_recall: false
+  min_gene_bins: 100
+
+# ------------------------------------------------------------------ HIC ---
+hic:
+  # V-C: NOT pinned, deliberately. The Hi-C branch reproduces ground truth
+  # byte-identically at the AMBIENT thread count -- gc_track 27/27 exact,
+  # Saddle corner scores 81/81 at worst relative difference 0, eigenvector
+  # reconstruction to 1.91e-14. Pinning it could CHANGE results that are
+  # currently exact, so `null` means observe-and-record only. See
+  # workflow/lib/threading.py for why the policy is asymmetric.
+  blas_threads: null
+  resolution: 5000
+  zoomify_resolutions: [5000, 10000, 15000, 20000, 25000, 30000,
+                        40000, 50000, 60000, 80000, 100000]
+  balance:
+    method: ICE
+    cis_only: true
+    mad_max: 3
+    min_nnz: 10
+    min_count: 0
+    ignore_diags: 2
+    tol: 1.0e-5
+    force: true
+  chromosight:
+    pattern: loops
+    norm: auto
+    min_dist: 50000
+    max_dist: 5000000
+    pearson: 0.3
+    perc_undetected: 40.0
+    perc_zero: 10.0
+    n_mads: 3
+    min_separation: 10000
+  loop_strength:
+    center: 3
+    expected: {ignore_diags: 0, intra_only: true}
+  pileup:
+    flank: 100000
+    min_diag: 0
+    nshifts: 0
+    minshift: 100000
+    maxshift: 1000000
+    seed: 42
+    score: {center: 3, statistic: mean}
+  compartments:
+    n_eigs: 3
+    phasing: gc
+    saddle: {n_bins: 38, qrange: [0.025, 0.975], strength_extent: 8}
+    eigenvector_selection: fixture  # fixture | auto
+    # LIABILITY, NOT A SAFEGUARD -- leave this false.
+    # cooltools 0.5.4's _phase_eigs already flips every eigenvector to
+    # spearman(E, GC) >= 0, unconditionally, for this call pattern. Measured:
+    # 0 of 102 tracks needed a flip and 0 of 102 differ in sign from ground
+    # truth. So this can only ever be a no-op -- except on a weakly-phased
+    # track, and 34 of 102 have |rho| < 0.1, where firing it would move us AWAY
+    # from ground truth. Kept only so the correlation is still recorded in
+    # eigenvector_orientation.tsv, which is useful as a diagnostic.
+    canonicalise_sign: false
+                                    # and record the flip. A silent flip mirrors every
+                                    # saddle plot; set false ONLY to diff raw cooltools output.
+  stackup:                          # loop_anchor_stackup (01_04 stackup half)
+    signals: [AcMe3, H3K27me3, H3K27ac, CTCF, Rad21, RNA-Seq]
+    flank: 100000
+    nbins: 100
+    source: merged20                # D-9: csaw-normalised tracks, NOT data/bigwigs/merged_bw
+  allelic_ratio:
+    # Verbatim from 01_07_get_allelic_ratio_gtf.py. Keys are the CSV column
+    # names; values are the pipeline's {clone}_{condition} ids.
+    wt_clone_map:
+      B1:     B1_WT
+      C5:     C5_WT
+      CL30.7: CL30_WT
+      E6:     E6_WT
+      JTG:    JTG_WT
+    degron_clone_map:
+      Rad21B1621_nodTAG: B1621_Rad21-NodTAG
+      Rad21B1621_dTAG:   B1621_Rad21-dTAG
+      F3_0h:             F3_CTCF-NodTAG
+      F3_4d:             F3_CTCF-dTAG
+      C5C10_NodTAG:      C5C10_CTCF-NodTAG
+      C5C10_4DdTAG:      C5C10_CTCF-dTAG
+      E6A7_NodTAG:       E6A7_CTCF-NodTAG
+      E6A7_4DdTAG:       E6A7_CTCF-dTAG
+    stats_thresholds: [all, non_zero, ">0.1"]
+  mcool_to_hic:
+    enabled: false                  # OFF by default; needs the separate hiclift env
+    memory: 40G
+    resolutions: [2500000, 1000000, 500000, 250000, 100000, 50000, 25000, 10000, 5000]
+
+# ------------------------------------------------------------- METALOCI ---
+metaloci:
+  # V-C: observe-and-record only, same reasoning as hic.blas_threads. METALoci's
+  # own permutation test is the dominant source of run-to-run variation here and
+  # is handled by the tolerance policy, not by thread pinning.
+  blas_threads: null
+  version: "1.3.2"
+  resolution: 5000
+  runs: [wt, degron, consensus]
+  signals: [H3K27ac, H3K27me3, AcMe3, RNA-Seq, CTCF, Rad21]   # shortenable
+  layout:
+    absolute: true                  # -a
+    cutoff: 1.5                     # -o 1.5
+    persistence_length: {full: 15, escape: 10, non_escape: 10}
+    plot: true                      # -p  MUST be explicit: `-pl 15` parses as `-p -l 15`
+    multiprocess: true              # -m
+    force: true                     # -f
+  transplant_full_layout_into_subregions: true
+  # shift = abs(full.start - sub.start) // resolution   <- abs() IS REQUIRED.
+  # Mecp2 escape -> +66, Jarid escape -> +280, non_escape -> 0.
+  lm:
+    permutations: 9999
+    pvalue: 0.05
+    quadrants: [1, 3]
+  figure:
+    export_intermediates: true      # -e
+    zscore: false                   # -z -> a separate, non-paper output tree
+  compartmentalization_formula: "(sq1 + sq3) / (q1+q2+q3+q4) * 100"
+  sample_exclusions:                # verbatim from 01_10 cell 4
+    - {clone: C5C10, signals_except: [RNA-Seq]}
+    - {signal: Rad21, only_clones: [B1621]}
+    - {signal: CTCF,  exclude_clones: [B1621]}
+
+# -------------------------------------------------------------- COOLBOX ---
+coolbox:
+  enabled: true
+  dpi: 300
+  comparisons: [dTAG_vs_NodTAG, Xa_vs_Xi]
+  # Display ranges live in resources/fixtures/coolbox_display.yaml (F-7).
+
+# ------------------------------------------------------------------- QC ---
+qc:
+  enabled: false                    # set true to also emit the QC figures
+  macs2:
+    genome_size: 1.87e9             # == MACS2's `-g mm`; the shell emits `mm`
+    extsize: 180
+    nomodel: true
+    keep_dup: all
+    format: BAMPE
+    qvalue: {CTCF: 0.01, Rad21: 0.01, H3K27ac: 0.05, H3K27me3: 0.05}
+    broad_marks: [H3K27me3]
+    broad_cutoff: 0.1
+    use_control: false              # no IgG BAMs exist (fixture F-9)
+  enrichment: {flank: 200000, nbins: 100}
+
+# ------------------------------------------------------------- FIXTURES ---
+fixtures:
+  mode: paper                       # paper | auto
+  dir: resources/fixtures
+  verify_checksums: true
+
+# ------------------------------------------------------------- [EDIT ME] ---
+figures:
+  formats: [svg, pdf]
+  dpi: 300
+  panels: all                       # all | paper | [Fig3a, Fig6, ...]
+  colour:
+    allelic_ratio_cmap: Greens
+    allelic_ratio_cmap_truncate: [0.0, 1.0]
+    allelic_ratio_norm: [0.0424769728421052, 0.40909353528]
+  layout_fixture: resources/fixtures/fig6_layout.yaml
+  coolbox_display_fixture: resources/fixtures/coolbox_display.yaml
+
+# ------------------------------------------------------------- RESOURCES ---
+resources:
+  max_threads_per_job: 40
+  default_threads: 8
+  mem_mb: {small: 4000, medium: 16000, large: 40000, huge: 64000}
+  keep_intermediate:
+    rep10_bigwigs: true
+    rep5k_bigwigs: true
+    acme3_bw20: true

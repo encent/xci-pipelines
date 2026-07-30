@@ -1,0 +1,15 @@
+# Ground-truth scale factors recovered from the ORIGINAL bigWigs.
+# See workflow/scripts/py/recover_scale_factors.py. REPLICATE LEVEL ONLY.
+sample	scale_factor	LibSize	NormFactor	recovered_from	source_bigwig
+RNA-Seq_E6A7_CTCF-NodTAG_Gall_rep1	0.07336600124835968			chr13,chr19	RNA-Seq_E6A7_CTCF-NodTAG_Gall_rep1.bw
+RNA-Seq_E6A7_CTCF-NodTAG_Gall_rep2	0.10376700013875961			chr13,chr19	RNA-Seq_E6A7_CTCF-NodTAG_Gall_rep2.bw
+RNA-Seq_E6A7_CTCF-NodTAG_Xa_rep1	0.07336600124835968			chr13,chr19	RNA-Seq_E6A7_CTCF-NodTAG_Xa_rep1.bw
+RNA-Seq_E6A7_CTCF-NodTAG_Xa_rep2	0.10376700013875961			chr13,chr19	RNA-Seq_E6A7_CTCF-NodTAG_Xa_rep2.bw
+RNA-Seq_E6A7_CTCF-NodTAG_Xi_rep1	0.07336600124835968			chr13,chr19	RNA-Seq_E6A7_CTCF-NodTAG_Xi_rep1.bw
+RNA-Seq_E6A7_CTCF-NodTAG_Xi_rep2	0.10376700013875961			chr13,chr19	RNA-Seq_E6A7_CTCF-NodTAG_Xi_rep2.bw
+RNA-Seq_E6A7_CTCF-dTAG_Gall_rep1	0.0769570991396904			chr13,chr19	RNA-Seq_E6A7_CTCF-dTAG_Gall_rep1.bw
+RNA-Seq_E6A7_CTCF-dTAG_Gall_rep2	0.0936570018529892			chr13,chr19	RNA-Seq_E6A7_CTCF-dTAG_Gall_rep2.bw
+RNA-Seq_E6A7_CTCF-dTAG_Xa_rep1	0.0769570991396904			chr13,chr19	RNA-Seq_E6A7_CTCF-dTAG_Xa_rep1.bw
+RNA-Seq_E6A7_CTCF-dTAG_Xa_rep2	0.0936570018529892			chr13,chr19	RNA-Seq_E6A7_CTCF-dTAG_Xa_rep2.bw
+RNA-Seq_E6A7_CTCF-dTAG_Xi_rep1	0.0769570991396904			chr13,chr19	RNA-Seq_E6A7_CTCF-dTAG_Xi_rep1.bw
+RNA-Seq_E6A7_CTCF-dTAG_Xi_rep2	0.0936570018529892			chr13,chr19	RNA-Seq_E6A7_CTCF-dTAG_Xi_rep2.bw
